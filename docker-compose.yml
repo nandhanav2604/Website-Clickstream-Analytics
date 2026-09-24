@@ -1,0 +1,103 @@
+services:
+
+  kafka:
+    image: apache/kafka:latest
+
+    container_name: clickstream-kafka
+
+    ports:
+      # Only the host listener is published. Port 9092 is deliberately
+      # NOT exposed: it advertises kafka:9092, a name the host cannot
+      # resolve, so connecting to it from the host fails after the
+      # initial handshake.
+      - "29092:29092"
+
+    environment:
+
+      # Kafka node
+      KAFKA_NODE_ID: 1
+
+      # Run as broker + controller
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # Kafka listeners
+      #
+      # Two data listeners, one per network vantage point:
+      #   PLAINTEXT      :9092  - reached from inside the compose network
+      #   PLAINTEXT_HOST :29092 - reached from the host machine
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092,CONTROLLER://:9093
+
+      # What each listener tells clients to come back on.
+      #
+      # This is the address the client actually dials for produce and
+      # fetch - the bootstrap connection only serves metadata. So each
+      # listener must advertise a name that resolves FROM THE CLIENT'S
+      # OWN NETWORK:
+      #   containers resolve kafka:9092 via compose DNS
+      #   the host resolves localhost:29092 via the published port above
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+
+      # Controller configuration
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      # Listener security
+      #
+      # A listener name is only a label; this map is what tells Kafka
+      # which protocol to speak on it. Every name used above must appear
+      # here or the broker refuses to start.
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+
+      # Broker communication
+      #
+      # Stays on PLAINTEXT: broker-to-broker traffic is internal to the
+      # compose network and must not be routed back out via the host.
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      # Single broker settings
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      # One partition
+      KAFKA_NUM_PARTITIONS: 1
+
+
+  producer:
+    image: clickstream-producer:latest
+
+    container_name: clickstream-producer
+
+    depends_on:
+      - kafka
+
+    restart: on-failure
+
+    environment:
+      # Set explicitly, NOT read from .env: a container reaches the
+      # broker over the compose network, where the correct address is
+      # kafka:9092. The .env file carries the host address instead, for
+      # processes you run by hand.
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+      # The topic name IS the same everywhere, so this one can come from
+      # .env via compose's automatic variable substitution.
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-clickstream-json}
+
+
+  consumer:
+    image: clickstream-consumer:latest
+
+    container_name: clickstream-consumer
+
+    depends_on:
+      - kafka
+
+    restart: on-failure
+
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-clickstream-json}
+      KAFKA_DLQ_TOPIC: ${KAFKA_DLQ_TOPIC:-clickstream-json-dlq}

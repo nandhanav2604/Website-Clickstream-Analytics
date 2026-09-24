@@ -1,0 +1,36 @@
+# --------------------------------
+# Python
+# --------------------------------
+
+.venv/
+__pycache__/
+
+
+# --------------------------------
+# Local configuration
+#
+# .env holds machine-specific values
+# and is never committed.
+# .env.example is the committed
+# template and is NOT matched by the
+# ".env" pattern below, because the
+# pattern matches that exact filename
+# only.
+# --------------------------------
+
+.env
+
+
+# --------------------------------
+# Generated artifacts
+# --------------------------------
+
+data/
+checkpoints/
+
+
+# --------------------------------
+# OS noise
+# --------------------------------
+
+.DS_Store

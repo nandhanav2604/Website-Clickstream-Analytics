@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>SoleStream | Welcome</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            SoleStream 👟
+        </div>
+
+
+        <div class="nav-links">
+
+            <a href="index.html">
+                Home
+            </a>
+
+            <a href="shoes.html">
+                Shop Shoes
+            </a>
+
+        </div>
+
+    </nav>
+
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <h1>
+                Find Your Perfect Pair
+            </h1>
+
+            <p>
+                Discover shoes based on your style,
+                preferences and shopping choices.
+            </p>
+
+
+            <a href="#profile">
+
+                <button>
+                    Get Started
+                </button>
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- PROFILE -->
+
+    <section
+        id="profile"
+        class="profile-page-section"
+    >
+
+        <div class="profile-box">
+
+            <h2>
+                Tell Us About Yourself
+            </h2>
+
+
+            <p>
+                Your unique Customer ID helps us
+                identify your shopping session and
+                preferences.
+            </p>
+
+
+            <!-- NAME -->
+
+            <input
+                type="text"
+                id="username"
+                placeholder="Enter your name"
+            >
+
+
+            <!-- UNIQUE CUSTOMER ID -->
+
+            <input
+                type="text"
+                id="customerId"
+                placeholder="Enter Mobile Number or Customer ID"
+            >
+
+
+            <!-- AGE GROUP -->
+
+            <select id="ageGroup">
+
+                <option value="">
+                    Select Age Group
+                </option>
+
+                <option value="under_18">
+                    Under 18
+                </option>
+
+                <option value="18_25">
+                    18 - 25
+                </option>
+
+                <option value="26_40">
+                    26 - 40
+                </option>
+
+                <option value="41_60">
+                    41 - 60
+                </option>
+
+                <option value="60_plus">
+                    60+
+                </option>
+
+            </select>
+
+
+            <!-- GENDER -->
+
+            <select id="gender">
+
+                <option value="">
+                    Select Gender
+                </option>
+
+                <option value="male">
+                    Male
+                </option>
+
+                <option value="female">
+                    Female
+                </option>
+
+                <option value="other">
+                    Other
+                </option>
+
+                <option value="prefer_not_to_say">
+                    Prefer not to say
+                </option>
+
+            </select>
+
+
+            <!-- START SHOPPING -->
+
+            <button
+                class="primary-button"
+                onclick="saveProfile()"
+            >
+
+                Start Shopping →
+
+            </button>
+
+
+            <p
+                id="profileMessage"
+                class="profile-message"
+            ></p>
+
+        </div>
+
+    </section>
+
+
+    <script src="script.js"></script>
+
+
+</body>
+
+</html>

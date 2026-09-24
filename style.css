@@ -1,0 +1,1040 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    background:
+        #f4f4f6;
+
+    color:
+        #222;
+
+}
+
+
+button {
+
+    cursor:
+        pointer;
+
+    border:
+        none;
+
+    transition:
+        0.2s;
+
+}
+
+
+button:hover {
+
+    transform:
+        translateY(-2px);
+
+}
+
+
+/* =========================================
+   NAVBAR
+========================================= */
+
+.navbar {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    padding:
+        18px 8%;
+
+    background:
+        #111;
+
+    color:
+        white;
+
+    position:
+        sticky;
+
+    top:
+        0;
+
+    z-index:
+        100;
+
+}
+
+
+.logo {
+
+    font-size:
+        26px;
+
+    font-weight:
+        bold;
+
+}
+
+
+.nav-links {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        20px;
+
+}
+
+
+.nav-links a {
+
+    color:
+        white;
+
+    text-decoration:
+        none;
+
+}
+
+
+.cart-nav-button {
+
+    padding:
+        10px 15px;
+
+    border-radius:
+        6px;
+
+}
+
+
+/* =========================================
+   HERO
+========================================= */
+
+.hero {
+
+    min-height:
+        500px;
+
+    display:
+        flex;
+
+    justify-content:
+        center;
+
+    align-items:
+        center;
+
+    text-align:
+        center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #111,
+            #3d3d3d
+        );
+
+    color:
+        white;
+
+}
+
+
+.hero h1 {
+
+    font-size:
+        58px;
+
+    margin-bottom:
+        20px;
+
+}
+
+
+.hero p {
+
+    font-size:
+        20px;
+
+    margin-bottom:
+        30px;
+
+}
+
+
+.hero button {
+
+    padding:
+        14px 28px;
+
+    font-size:
+        16px;
+
+    border-radius:
+        8px;
+
+}
+
+
+/* =========================================
+   PROFILE
+========================================= */
+
+.profile-page-section {
+
+    min-height:
+        600px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        60px 20px;
+
+}
+
+
+.profile-box {
+
+    background:
+        white;
+
+    padding:
+        45px;
+
+    width:
+        100%;
+
+    max-width:
+        500px;
+
+    border-radius:
+        15px;
+
+    box-shadow:
+        0 10px 30px
+        rgba(0,0,0,0.1);
+
+    text-align:
+        center;
+
+}
+
+
+.profile-box h2 {
+
+    font-size:
+        32px;
+
+    margin-bottom:
+        10px;
+
+}
+
+
+.profile-box p {
+
+    margin-bottom:
+        25px;
+
+    color:
+        #666;
+
+}
+
+
+.profile-box input,
+.profile-box select {
+
+    width:
+        100%;
+
+    padding:
+        14px;
+
+    margin:
+        10px 0;
+
+    border:
+        1px solid #ccc;
+
+    border-radius:
+        6px;
+
+}
+
+
+.primary-button {
+
+    width:
+        100%;
+
+    margin-top:
+        15px;
+
+    padding:
+        15px;
+
+    background:
+        #111;
+
+    color:
+        white;
+
+    border-radius:
+        7px;
+
+}
+
+
+.profile-message {
+
+    margin-top:
+        15px !important;
+
+    font-weight:
+        bold;
+
+}
+
+
+/* =========================================
+   SHOP HEADER
+========================================= */
+
+.shop-header {
+
+    text-align:
+        center;
+
+    padding:
+        60px 20px 30px;
+
+}
+
+
+.shop-header h1 {
+
+    font-size:
+        40px;
+
+    margin-bottom:
+        10px;
+
+}
+
+
+.shop-header p {
+
+    color:
+        #666;
+
+}
+
+
+/* =========================================
+   FILTERS
+========================================= */
+
+.filters-section {
+
+    padding:
+        25px 8%;
+
+    text-align:
+        center;
+
+}
+
+
+.filters-section h2 {
+
+    margin-bottom:
+        20px;
+
+}
+
+
+.filters {
+
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+    justify-content:
+        center;
+
+    gap:
+        12px;
+
+}
+
+
+.filters select,
+.clear-filter {
+
+    padding:
+        12px 15px;
+
+    border:
+        1px solid #ccc;
+
+    border-radius:
+        6px;
+
+}
+
+
+.clear-filter {
+
+    background:
+        #222;
+
+    color:
+        white;
+
+}
+
+
+.product-count {
+
+    margin-top:
+        20px;
+
+    font-weight:
+        bold;
+
+}
+
+
+/* =========================================
+   PRODUCTS
+========================================= */
+
+.products-section {
+
+    padding:
+        40px 8% 80px;
+
+}
+
+
+.product-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(270px, 1fr)
+        );
+
+    gap:
+        25px;
+
+}
+
+
+.product-card {
+
+    background:
+        white;
+
+    border-radius:
+        15px;
+
+    overflow:
+        hidden;
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,0.1);
+
+    transition:
+        0.2s;
+
+}
+
+
+.product-card:hover {
+
+    transform:
+        translateY(-5px);
+
+}
+
+
+.product-info {
+
+    padding:
+        20px;
+
+}
+
+
+.product-info h3 {
+
+    margin:
+        10px 0;
+
+}
+
+
+.product-info p {
+
+    margin:
+        7px 0;
+
+}
+
+
+.brand-tag {
+
+    font-size:
+        13px;
+
+    font-weight:
+        bold;
+
+    color:
+        #666;
+
+}
+
+
+.price {
+
+    font-size:
+        22px;
+
+    font-weight:
+        bold;
+
+    margin:
+        15px 0 !important;
+
+}
+
+
+.product-info label {
+
+    display:
+        block;
+
+    margin-top:
+        15px;
+
+}
+
+
+.size-selector {
+
+    width:
+        100%;
+
+    padding:
+        10px;
+
+    margin:
+        8px 0 15px;
+
+}
+
+
+/* =========================================
+   SHOE VISUALS
+========================================= */
+
+.shoe-visual {
+
+    height:
+        170px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    position:
+        relative;
+
+}
+
+
+.shoe-icon {
+
+    font-size:
+        90px;
+
+    transform:
+        rotate(-12deg);
+
+}
+
+
+.brand-icon {
+
+    position:
+        absolute;
+
+    top:
+        15px;
+
+    right:
+        20px;
+
+    font-size:
+        30px;
+
+}
+
+
+/* NIKE */
+
+.nike-black {
+
+    background:
+        linear-gradient(
+            135deg,
+            #111,
+            #666
+        );
+
+}
+
+
+.nike-red {
+
+    background:
+        linear-gradient(
+            135deg,
+            #7f0000,
+            #ef5350
+        );
+
+}
+
+
+.nike-blue {
+
+    background:
+        linear-gradient(
+            135deg,
+            #0d47a1,
+            #42a5f5
+        );
+
+}
+
+
+/* ADIDAS */
+
+.adidas-white {
+
+    background:
+        linear-gradient(
+            135deg,
+            #eeeeee,
+            #9e9e9e
+        );
+
+}
+
+
+.adidas-blue {
+
+    background:
+        linear-gradient(
+            135deg,
+            #0d47a1,
+            #64b5f6
+        );
+
+}
+
+
+.adidas-black {
+
+    background:
+        linear-gradient(
+            135deg,
+            #212121,
+            #757575
+        );
+
+}
+
+
+/* PUMA */
+
+.puma-red {
+
+    background:
+        linear-gradient(
+            135deg,
+            #7f0000,
+            #ff5252
+        );
+
+}
+
+
+.puma-white {
+
+    background:
+        linear-gradient(
+            135deg,
+            #eeeeee,
+            #bdbdbd
+        );
+
+}
+
+
+.puma-black {
+
+    background:
+        linear-gradient(
+            135deg,
+            #212121,
+            #616161
+        );
+
+}
+
+
+/* NEW BALANCE */
+
+.nb-blue {
+
+    background:
+        linear-gradient(
+            135deg,
+            #1a237e,
+            #7986cb
+        );
+
+}
+
+
+.nb-white {
+
+    background:
+        linear-gradient(
+            135deg,
+            #eeeeee,
+            #90a4ae
+        );
+
+}
+
+
+.nb-red {
+
+    background:
+        linear-gradient(
+            135deg,
+            #b71c1c,
+            #ef9a9a
+        );
+
+}
+
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.reaction-buttons {
+
+    display:
+        flex;
+
+    gap:
+        10px;
+
+    margin-bottom:
+        10px;
+
+}
+
+
+.like-button,
+.dislike-button {
+
+    flex:
+        1;
+
+    padding:
+        10px;
+
+    border-radius:
+        6px;
+
+    background:
+        #f1f1f1;
+
+}
+
+
+.like-button.active {
+
+    background:
+        #c8e6c9;
+
+    font-weight:
+        bold;
+
+}
+
+
+.dislike-button.active {
+
+    background:
+        #ffcdd2;
+
+    font-weight:
+        bold;
+
+}
+
+
+.cart-button {
+
+    width:
+        100%;
+
+    padding:
+        12px;
+
+    background:
+        #111;
+
+    color:
+        white;
+
+    border-radius:
+        6px;
+
+    margin:
+        8px 0;
+
+}
+
+
+.buy-now-button {
+
+    width:
+        100%;
+
+    padding:
+        12px;
+
+    background:
+        #444;
+
+    color:
+        white;
+
+    border-radius:
+        6px;
+
+}
+
+
+/* =========================================
+   CART
+========================================= */
+
+.cart-section {
+
+    background:
+        #111;
+
+    color:
+        white;
+
+    padding:
+        60px 12%;
+
+}
+
+
+.cart-section h2 {
+
+    text-align:
+        center;
+
+    margin-bottom:
+        30px;
+
+}
+
+
+.cart-item {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    padding:
+        15px;
+
+    border-bottom:
+        1px solid #444;
+
+}
+
+
+.remove-button {
+
+    padding:
+        8px 12px;
+
+    border-radius:
+        5px;
+
+}
+
+
+.cart-summary {
+
+    margin-top:
+        30px;
+
+    text-align:
+        right;
+
+}
+
+
+.buy-button {
+
+    margin-top:
+        15px;
+
+    padding:
+        14px 30px;
+
+    background:
+        white;
+
+    color:
+        black;
+
+    border-radius:
+        6px;
+
+}
+
+
+.order-message {
+
+    margin-top:
+        25px;
+
+    font-size:
+        22px;
+
+    font-weight:
+        bold;
+
+    text-align:
+        center;
+
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 700px) {
+
+    .navbar {
+
+        flex-direction:
+            column;
+
+        gap:
+            15px;
+
+    }
+
+
+    .hero h1 {
+
+        font-size:
+            38px;
+
+    }
+
+
+    .filters {
+
+        flex-direction:
+            column;
+
+    }
+
+
+    .filters select,
+    .clear-filter {
+
+        width:
+            100%;
+
+    }
+
+
+    .cart-item {
+
+        flex-direction:
+            column;
+
+        gap:
+            10px;
+
+        align-items:
+            flex-start;
+
+    }
+
+}

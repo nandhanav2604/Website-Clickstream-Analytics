@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+# Send print() straight to the container log instead of sitting in an
+# 8KB block buffer. Without this the startup config banner does not
+# show up in "docker compose logs" until long after startup.
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY config.py consumer.py ./
+
+CMD ["python", "consumer.py"]
