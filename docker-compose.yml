@@ -66,6 +66,13 @@ services:
 
 
   producer:
+    # build: makes "docker compose build" (and "up --build") rebuild from
+    # the code on disk; without it the container can silently run a stale
+    # image. image: still names the result, so the tag stays consistent.
+    build:
+      context: .
+      dockerfile: Dockerfile.producer
+
     image: clickstream-producer:latest
 
     container_name: clickstream-producer
@@ -88,6 +95,10 @@ services:
 
 
   consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+
     image: clickstream-consumer:latest
 
     container_name: clickstream-consumer

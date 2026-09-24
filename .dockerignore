@@ -1,0 +1,54 @@
+# --------------------------------
+# Docker build context exclusions
+#
+# Everything not listed here is sent
+# to the Docker daemon on every build.
+# The Dockerfiles only COPY what each
+# service needs, but keeping the
+# context small keeps builds fast.
+# --------------------------------
+
+
+# --------------------------------
+# Local configuration
+#
+# .env is excluded for SAFETY, not
+# just speed: it holds machine-specific
+# values and may hold credentials.
+# Keeping it out of the build context
+# means no future COPY (e.g. "COPY . .")
+# can ever bake it into an image layer,
+# where it would survive in the image
+# history even if deleted later.
+# --------------------------------
+
+.env
+
+
+# --------------------------------
+# Python
+#
+# Unlike .gitignore, patterns here are
+# anchored to the context root, so the
+# **/ prefix is needed to match at any
+# depth.
+# --------------------------------
+
+.venv/
+**/__pycache__/
+**/*.pyc
+
+
+# --------------------------------
+# Generated artifacts
+# --------------------------------
+
+data/
+checkpoints/
+
+
+# --------------------------------
+# Version control
+# --------------------------------
+
+.git/
