@@ -21,6 +21,9 @@ config.py          Single source of Kafka settings for every service.
 docker-compose.yml kafka + producer + consumer (app.py deliberately excluded)
 .env.example       Template; copy to .env (gitignored)
 docs/tracking-plan.md   Event contract. Authority for required/optional fields.
+requirements.txt   Production deps, installed into the Docker images.
+requirements-dev.txt    Local tooling + test data (pandas, pyarrow); host only.
+scripts/make_test_parquet.py   Seeded fake events -> data/test_events.parquet.
 ```
 
 ## Conventions
@@ -37,6 +40,10 @@ docs/tracking-plan.md   Event contract. Authority for required/optional fields.
   arguments one per line. Python: double quotes, 4-space indent, plain `print`
   (Dockerfiles set `PYTHONUNBUFFERED=1`). JS: `onclick` calling globals,
   `localStorage` for profile/cart/reactions.
+- **Two requirements files.** `requirements.txt` is production only — the
+  Dockerfiles install it, so every entry grows the images. Local tooling and
+  test-data deps go in `requirements-dev.txt` (which `-r` includes the
+  production set; install that one on the host).
 - Known gap: API base URL hardcoded as `http://localhost:5000` in `script.js`.
 
 ## Event schema

@@ -809,7 +809,27 @@ function displayProducts(productList) {
         getReactions();
 
 
+    /* A like/dislike re-renders the whole
+       grid, so remember each card's chosen
+       size and put it back afterwards. */
+
+    const chosenSizes = {};
+
+    container
+        .querySelectorAll(".size-selector")
+        .forEach(select => {
+
+            chosenSizes[select.id] =
+                select.value;
+
+        });
+
+
     container.innerHTML = "";
+
+    container.removeAttribute(
+        "aria-busy"
+    );
 
 
     productList.forEach(product => {
@@ -820,7 +840,7 @@ function displayProducts(productList) {
 
 
         const productCard =
-            document.createElement("div");
+            document.createElement("article");
 
 
         productCard.className =
@@ -829,66 +849,114 @@ function displayProducts(productList) {
 
         productCard.innerHTML = `
 
-            <div class="shoe-visual ${product.visual}">
+            <div class="card-media">
 
-                <div class="brand-icon">
+                <span class="category-badge">
 
-                    ${product.brand}
+                    ${product.category}
+
+                </span>
+
+
+                <div
+                    class="reaction-buttons"
+                    role="group"
+                    aria-label="Rate ${product.name}"
+                >
+
+                    <button
+                        type="button"
+                        class="like-button ${reaction === "like" ? "active" : ""}"
+                        aria-pressed="${reaction === "like"}"
+                        aria-label="Like"
+                        title="Like"
+                        onclick="reactToProduct(
+                            ${product.id},
+                            'like'
+                        )"
+                    >
+
+                        ${ICONS.thumbUp}
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="dislike-button ${reaction === "dislike" ? "active" : ""}"
+                        aria-pressed="${reaction === "dislike"}"
+                        aria-label="Dislike"
+                        title="Dislike"
+                        onclick="reactToProduct(
+                            ${product.id},
+                            'dislike'
+                        )"
+                    >
+
+                        ${ICONS.thumbDown}
+
+                    </button>
 
                 </div>
 
 
-                <div class="shoe-icon">
-
-                    ${product.icon}
-
-                </div>
+                ${shoeIllustration(product)}
 
             </div>
 
 
             <div class="product-info">
 
-                <span class="brand-tag">
+                <p class="brand-tag">
 
                     ${product.brand}
 
-                </span>
+                </p>
 
 
-                <h3>
+                <h3 class="product-name">
 
                     ${product.name}
 
                 </h3>
 
 
-                <p>
+                <p class="product-meta">
 
-                    Category:
-                    ${product.category}
+                    <span
+                        class="colour-dot"
+                        style="background: ${SHOE_COLOURS[product.colour].upper}"
+                    ></span>
 
-                </p>
-
-
-                <p>
-
-                    Colour:
                     ${product.colour}
 
                 </p>
 
 
-                <p class="price">
+                <div class="price-row">
 
-                    ₹${product.price}
+                    <span class="price">
 
-                </p>
+                        ${formatPrice(product.price)}
+
+                    </span>
 
 
-                <label>
+                    <span class="price-tier tier-${priceTier(product.price).key}">
 
-                    Select Size
+                        ${priceTier(product.price).label}
+
+                    </span>
+
+                </div>
+
+
+                <label
+                    class="size-label"
+                    for="size-${product.id}"
+                >
+
+                    Size
 
                 </label>
 
@@ -899,82 +967,57 @@ function displayProducts(productList) {
                 >
 
                     <option value="6">
-                        Size 6
+                        6
                     </option>
 
                     <option value="7">
-                        Size 7
+                        7
                     </option>
 
                     <option value="8">
-                        Size 8
+                        8
                     </option>
 
                     <option value="9">
-                        Size 9
+                        9
                     </option>
 
                     <option value="10">
-                        Size 10
+                        10
                     </option>
 
                 </select>
 
 
-                <div class="reaction-buttons">
-
+                <div class="card-actions">
 
                     <button
-                        class="like-button ${reaction === "like" ? "active" : ""}"
-                        onclick="reactToProduct(
-                            ${product.id},
-                            'like'
+                        type="button"
+                        class="cart-button"
+                        onclick="addToCart(
+                            ${product.id}
                         )"
                     >
 
-                        👍 Like
+                        Add to cart
 
                     </button>
 
 
                     <button
-                        class="dislike-button ${reaction === "dislike" ? "active" : ""}"
-                        onclick="reactToProduct(
-                            ${product.id},
-                            'dislike'
+                        type="button"
+                        class="buy-now-button"
+                        onclick="openCheckout(
+                            'single',
+                            ${product.id}
                         )"
                     >
 
-                        👎 Dislike
+                        Buy now
 
                     </button>
-
 
                 </div>
-
-
-                <button
-                    class="cart-button"
-                    onclick="addToCart(
-                        ${product.id}
-                    )"
-                >
-
-                    Add to Cart
-
-                </button>
-
-
-                <button
-                    class="buy-now-button"
-                    onclick="buySingleProduct(
-                        ${product.id}
-                    )"
-                >
-
-                    Buy Now
-
-                </button>
 
             </div>
 
@@ -985,13 +1028,70 @@ function displayProducts(productList) {
             productCard
         );
 
+
+        const sizeSelect =
+            productCard.querySelector(
+                ".size-selector"
+            );
+
+        if (chosenSizes[sizeSelect.id]) {
+
+            sizeSelect.value =
+                chosenSizes[sizeSelect.id];
+
+        }
+
     });
+
+
+    /* Empty state: filters matched nothing */
+
+    if (productList.length === 0) {
+
+        container.innerHTML = `
+
+            <div class="empty-state">
+
+                <h3>
+
+                    No shoes match those filters
+
+                </h3>
+
+
+                <p>
+
+                    Try a different brand or price range, or start over.
+
+                </p>
+
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    onclick="clearFilters()"
+                >
+
+                    Clear all filters
+
+                </button>
+
+            </div>
+
+        `;
+
+    }
 
 
     document.getElementById(
         "productCount"
     ).textContent =
-        `${productList.length} shoes found`;
+        productList.length === products.length
+            ? `${products.length} shoes`
+            : `${productList.length} of ${products.length} shoes`;
+
+
+    syncFilterControls();
 
 }
 
@@ -1299,8 +1399,10 @@ function addToCart(productId) {
     );
 
 
-    alert(
-        `${product.name} added to your cart!`
+    showToast(
+        `Added ${product.name}, size ${size}`,
+        "View cart",
+        openCart
     );
 
 }
@@ -1377,20 +1479,71 @@ function updateCart() {
         );
 
 
+    /* Bump the badge when the count goes up,
+       so an add registers even with the
+       drawer closed. */
+
     cartCount.textContent =
         cart.length;
+
+    cartCount.dataset.count =
+        cart.length;
+
+    if (cart.length > lastCartCount) {
+
+        cartCount.classList.remove("bump");
+
+        void cartCount.offsetWidth;
+
+        cartCount.classList.add("bump");
+
+    }
+
+    lastCartCount =
+        cart.length;
+
+
+    const checkoutButton =
+        document.getElementById(
+            "checkoutButton"
+        );
 
 
     if (
         cart.length === 0
     ) {
 
-        cartItems.innerHTML =
-            "Your cart is empty.";
+        cartItems.innerHTML = `
+
+            <div class="cart-empty">
+
+                <p>
+
+                    Your cart is empty.
+
+                </p>
+
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    onclick="closeCart()"
+                >
+
+                    Keep browsing
+
+                </button>
+
+            </div>
+
+        `;
 
 
         cartTotal.textContent =
-            "0";
+            formatPrice(0);
+
+        checkoutButton.disabled =
+            true;
 
         return;
 
@@ -1425,36 +1578,60 @@ function updateCart() {
 
             itemElement.innerHTML = `
 
-                <div>
+                <div class="cart-thumb">
 
-                    <strong>
-
-                        ${item.name}
-
-                    </strong>
-
-                    <br>
-
-                    Size:
-                    ${item.selectedSize}
-
-                    |
-
-                    ₹${item.price}
+                    ${shoeIllustration(item)}
 
                 </div>
 
 
-                <button
-                    class="remove-button"
-                    onclick="removeFromCart(
-                        ${index}
-                    )"
-                >
+                <div class="cart-item-info">
 
-                    Remove
+                    <p class="cart-item-brand">
 
-                </button>
+                        ${item.brand}
+
+                    </p>
+
+
+                    <p class="cart-item-name">
+
+                        ${item.name}
+
+                    </p>
+
+
+                    <p class="cart-item-meta">
+
+                        Size ${item.selectedSize} · ${item.colour}
+
+                    </p>
+
+                </div>
+
+
+                <div class="cart-item-side">
+
+                    <span class="cart-item-price">
+
+                        ${formatPrice(item.price)}
+
+                    </span>
+
+
+                    <button
+                        type="button"
+                        class="remove-button"
+                        onclick="removeFromCart(
+                            ${index}
+                        )"
+                    >
+
+                        Remove
+
+                    </button>
+
+                </div>
 
             `;
 
@@ -1468,7 +1645,10 @@ function updateCart() {
 
 
     cartTotal.textContent =
-        total;
+        formatPrice(total);
+
+    checkoutButton.disabled =
+        false;
 
 }
 
@@ -1503,8 +1683,14 @@ function buySingleProduct(productId) {
     );
 
 
-    alert(
-        `ORDER PLACED SUCCESSFULLY!\n\n${product.name}\nSize: ${size}\nAmount: ₹${product.price}`
+    showOrderConfirmation(
+        [
+            {
+                ...product,
+                selectedSize: size
+            }
+        ],
+        product.price
     );
 
 }
@@ -1520,18 +1706,15 @@ function buyCart() {
         getCart();
 
 
-    const orderMessage =
-        document.getElementById(
-            "orderMessage"
-        );
-
-
     if (
         cart.length === 0
     ) {
 
-        orderMessage.textContent =
-            "Your cart is empty.";
+        closeCheckout();
+
+        showToast(
+            "Your cart is empty."
+        );
 
         return;
 
@@ -1573,31 +1756,19 @@ function buyCart() {
     updateCart();
 
 
-    orderMessage.innerHTML =
-        `
-        🎉 ORDER PLACED SUCCESSFULLY! 🎉
-        <br>
-        ${cart.length} item(s) purchased.
-        <br>
-        Total: ₹${total}
-        `;
-
-
-    setTimeout(() => {
-
-        orderMessage.textContent =
-            "";
-
-    }, 8000);
+    showOrderConfirmation(
+        cart,
+        total
+    );
 
 }
 
 
 /* =========================================
-   SCROLL TO CART
+   OPEN / CLOSE CART DRAWER
 ========================================= */
 
-function scrollToCart() {
+function openCart() {
 
     const cart =
         document.getElementById(
@@ -1607,12 +1778,16 @@ function scrollToCart() {
 
     if (cart) {
 
-        cart.scrollIntoView({
+        cart.inert =
+            false;
 
-            behavior:
-                "smooth"
+        document.body.classList.add(
+            "cart-open"
+        );
 
-        });
+        cart
+            .querySelector(".icon-button")
+            .focus();
 
     }
 
@@ -1622,6 +1797,790 @@ function scrollToCart() {
     );
 
 }
+
+
+function closeCart() {
+
+    const cart =
+        document.getElementById(
+            "cart"
+        );
+
+
+    if (!cart) {
+
+        return;
+
+    }
+
+
+    document.body.classList.remove(
+        "cart-open"
+    );
+
+    cart.inert =
+        true;
+
+}
+
+
+/* =========================================
+   CHECKOUT (REVIEW -> CONFIRM)
+
+   Buying is two steps: Buy now / Checkout
+   opens a review, and only "Place order"
+   calls buySingleProduct() / buyCart().
+   Closing the review is an abandonment,
+   and it sends nothing.
+========================================= */
+
+let pendingCheckout =
+    null;
+
+
+function openCheckout(
+    mode,
+    productId = null
+) {
+
+    let items;
+
+
+    if (mode === "single") {
+
+        const product =
+            products.find(
+                p => p.id === productId
+            );
+
+        const size =
+            document.getElementById(
+                `size-${productId}`
+            ).value;
+
+        items = [
+            {
+                ...product,
+                selectedSize: size
+            }
+        ];
+
+    }
+
+    else {
+
+        items =
+            getCart();
+
+    }
+
+
+    if (items.length === 0) {
+
+        showToast(
+            "Your cart is empty."
+        );
+
+        return;
+
+    }
+
+
+    pendingCheckout = {
+        mode: mode,
+        productId: productId
+    };
+
+
+    const user =
+        getCurrentUser();
+
+    const total =
+        items.reduce(
+            (sum, item) =>
+                sum + item.price,
+            0
+        );
+
+
+    document.getElementById(
+        "checkoutBody"
+    ).innerHTML = `
+
+        <div class="checkout-header">
+
+            <h2 id="checkoutTitle">
+
+                Review your order
+
+            </h2>
+
+
+            <button
+                type="button"
+                class="icon-button"
+                onclick="closeCheckout()"
+                aria-label="Close"
+            >
+
+                ${ICONS.close}
+
+            </button>
+
+        </div>
+
+
+        <ul class="checkout-items">
+
+            ${items.map(item => `
+
+                <li class="checkout-item">
+
+                    <div class="cart-thumb">
+
+                        ${shoeIllustration(item)}
+
+                    </div>
+
+
+                    <div class="cart-item-info">
+
+                        <p class="cart-item-name">
+
+                            ${item.name}
+
+                        </p>
+
+
+                        <p class="cart-item-meta">
+
+                            Size ${item.selectedSize} · ${item.colour}
+
+                        </p>
+
+                    </div>
+
+
+                    <span class="cart-item-price">
+
+                        ${formatPrice(item.price)}
+
+                    </span>
+
+                </li>
+
+            `).join("")}
+
+        </ul>
+
+
+        <dl class="checkout-summary">
+
+            <div class="summary-row">
+
+                <dt>Subtotal</dt>
+
+                <dd>${formatPrice(total)}</dd>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <dt>Delivery</dt>
+
+                <dd>Free</dd>
+
+            </div>
+
+
+            <div class="summary-row summary-total">
+
+                <dt>Total</dt>
+
+                <dd>${formatPrice(total)}</dd>
+
+            </div>
+
+        </dl>
+
+
+        <p class="checkout-delivery">
+
+            Delivering to <strong>${user ? escapeHtml(user.username) : "you"}</strong>
+            by <strong>${deliveryDate()}</strong>.
+            Pay on delivery · 7-day returns.
+
+        </p>
+
+
+        <div class="checkout-actions">
+
+            <button
+                type="button"
+                class="buy-button"
+                onclick="confirmCheckout()"
+            >
+
+                Place order · ${formatPrice(total)}
+
+            </button>
+
+
+            <button
+                type="button"
+                class="secondary-button"
+                onclick="closeCheckout()"
+            >
+
+                ${mode === "single" ? "Keep browsing" : "Back to cart"}
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    closeCart();
+
+    document
+        .getElementById("checkoutDialog")
+        .showModal();
+
+}
+
+
+function confirmCheckout() {
+
+    if (!pendingCheckout) {
+
+        return;
+
+    }
+
+
+    const checkout =
+        pendingCheckout;
+
+    pendingCheckout =
+        null;
+
+
+    if (checkout.mode === "single") {
+
+        buySingleProduct(
+            checkout.productId
+        );
+
+    }
+
+    else {
+
+        buyCart();
+
+    }
+
+}
+
+
+function closeCheckout() {
+
+    pendingCheckout =
+        null;
+
+
+    const dialog =
+        document.getElementById(
+            "checkoutDialog"
+        );
+
+
+    if (dialog && dialog.open) {
+
+        dialog.close();
+
+    }
+
+}
+
+
+function showOrderConfirmation(
+    items,
+    total
+) {
+
+    const itemCount =
+        items.length;
+
+
+    document.getElementById(
+        "checkoutBody"
+    ).innerHTML = `
+
+        <div class="order-confirmed">
+
+            <div
+                class="confirmed-mark"
+                aria-hidden="true"
+            >
+
+                ${ICONS.check}
+
+            </div>
+
+
+            <h2 id="checkoutTitle">
+
+                Order placed
+
+            </h2>
+
+
+            <p>
+
+                ${itemCount} ${itemCount === 1 ? "item" : "items"} ·
+                ${formatPrice(total)}
+                · arriving by ${deliveryDate()}
+
+            </p>
+
+
+            <p class="order-ref">
+
+                Order #SS-${Math.floor(100000 + Math.random() * 900000)}
+
+            </p>
+
+
+            <button
+                type="button"
+                class="buy-button"
+                onclick="closeCheckout()"
+            >
+
+                Continue shopping
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    const dialog =
+        document.getElementById(
+            "checkoutDialog"
+        );
+
+
+    if (!dialog.open) {
+
+        dialog.showModal();
+
+    }
+
+}
+
+
+/* =========================================
+   UI HELPERS
+
+   Presentation only: nothing below calls
+   trackEvent().
+========================================= */
+
+let lastCartCount =
+    Infinity;
+
+
+const SHOE_COLOURS = {
+
+    Black: {
+        upper: "#26231F",
+        trim: "#57514A",
+        sole: "#EFEAE0"
+    },
+
+    White: {
+        upper: "#F7F5F0",
+        trim: "#CFC7B8",
+        sole: "#D9D2C4"
+    },
+
+    Red: {
+        upper: "#B8322A",
+        trim: "#7E1E18",
+        sole: "#F3EEE6"
+    },
+
+    Blue: {
+        upper: "#2D5A9B",
+        trim: "#1C3B69",
+        sole: "#F3EEE6"
+    }
+
+};
+
+
+const ICONS = {
+
+    thumbUp:
+        `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v10H4V10h3Zm0 0 4-7c1.7 0 2.6 1.2 2.2 2.8L12.5 9H18a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 16.8 20H7" /></svg>`,
+
+    thumbDown:
+        `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 14V4h3v10h-3Zm0 0-4 7c-1.7 0-2.6-1.2-2.2-2.8l.7-3.2H6a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 7.2 4H17" /></svg>`,
+
+    close:
+        `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>`,
+
+    check:
+        `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>`
+
+};
+
+
+/* For free text the shopper typed (their
+   name) before it goes into innerHTML. */
+
+function escapeHtml(text) {
+
+    const holder =
+        document.createElement("span");
+
+    holder.textContent =
+        text;
+
+    return holder.innerHTML;
+
+}
+
+
+function formatPrice(amount) {
+
+    return "₹" + amount.toLocaleString("en-IN");
+
+}
+
+
+/* Tiers use the same boundaries as the
+   price filter, so the label on a card
+   always agrees with the filter. */
+
+function priceTier(price) {
+
+    if (price < 3000) {
+
+        return {
+            key: "budget",
+            label: "Under ₹3k"
+        };
+
+    }
+
+
+    if (price <= 6000) {
+
+        return {
+            key: "mid",
+            label: "Mid-range"
+        };
+
+    }
+
+
+    return {
+        key: "premium",
+        label: "Premium"
+    };
+
+}
+
+
+function deliveryDate() {
+
+    const date =
+        new Date(
+            Date.now() + 4 * 24 * 60 * 60 * 1000
+        );
+
+
+    return date.toLocaleDateString(
+        "en-IN",
+        {
+            weekday: "short",
+            day: "numeric",
+            month: "short"
+        }
+    );
+
+}
+
+
+/* Drawn, not photographed: colour comes
+   from the product's colour, the cut from
+   its category (court shoes are high-tops)
+   and casual shoes get a gum sole. */
+
+function shoeIllustration(product) {
+
+    const colours =
+        SHOE_COLOURS[product.colour];
+
+
+    const sole =
+        product.category === "Casual"
+            ? "#C99A5B"
+            : colours.sole;
+
+
+    const upper =
+        product.category === "Basketball"
+            ? "M28 100 C26 80 28 52 34 36 C37 27 45 22 55 22 L100 22 C110 22 116 28 118 38 L126 56 C138 68 170 70 198 74 L214 78 C224 82 228 90 226 100 Z"
+            : "M24 100 C22 86 26 74 38 70 L78 64 C92 62 100 52 110 42 L124 30 C130 25 138 26 142 32 L152 46 C160 58 176 66 196 72 L214 78 C224 82 228 90 226 100 Z";
+
+
+    const detail =
+        product.category === "Basketball"
+            ? `<path d="M32 58 L112 50" stroke="${colours.trim}" stroke-width="5" stroke-linecap="round" />`
+            : product.category === "Training"
+                ? `<path d="M180 72 C204 76 222 84 226 100 L190 100 C190 88 186 78 180 72 Z" fill="${colours.trim}" />`
+                : "";
+
+
+    return `
+        <svg
+            class="shoe-art"
+            viewBox="0 0 240 140"
+            role="img"
+            aria-label="${product.colour} ${product.category.toLowerCase()} shoe"
+        >
+            <ellipse cx="124" cy="124" rx="100" ry="7" fill="rgba(27,25,22,0.12)" />
+            <path d="M18 100 L230 100 C232 106 230 114 222 116 L30 116 C22 116 16 110 18 100 Z" fill="${sole}" stroke="${colours.trim}" stroke-width="1.5" />
+            <path d="${upper}" fill="${colours.upper}" stroke="${colours.trim}" stroke-width="1.5" />
+            ${detail}
+            <path d="M62 92 C104 88 146 72 186 78" fill="none" stroke="${colours.trim}" stroke-width="6" stroke-linecap="round" />
+            <path d="M118 44 L136 52 M126 37 L144 46 M134 31 L150 41" stroke="${colours.trim}" stroke-width="3" stroke-linecap="round" />
+        </svg>
+    `;
+
+}
+
+
+/* Highlight the filters that are narrowing
+   the grid, and only enable "Clear all"
+   when there is something to clear. */
+
+function syncFilterControls() {
+
+    const filterIds = [
+        "brandFilter",
+        "categoryFilter",
+        "colourFilter",
+        "priceFilter"
+    ];
+
+
+    let activeCount =
+        0;
+
+
+    filterIds.forEach(id => {
+
+        const select =
+            document.getElementById(id);
+
+        if (!select) {
+
+            return;
+
+        }
+
+        const isActive =
+            select.value !== "all";
+
+        select
+            .closest(".filter-pill")
+            .classList.toggle(
+                "is-active",
+                isActive
+            );
+
+        if (isActive) {
+
+            activeCount++;
+
+        }
+
+    });
+
+
+    const clearButton =
+        document.querySelector(
+            ".clear-filter"
+        );
+
+
+    if (clearButton) {
+
+        clearButton.disabled =
+            activeCount === 0;
+
+        clearButton.textContent =
+            activeCount === 0
+                ? "Clear all"
+                : `Clear all (${activeCount})`;
+
+    }
+
+}
+
+
+let toastTimer =
+    null;
+
+
+function showToast(
+    message,
+    actionLabel = null,
+    action = null
+) {
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+
+    if (!toast) {
+
+        return;
+
+    }
+
+
+    toast.innerHTML = "";
+
+
+    const text =
+        document.createElement("span");
+
+    text.textContent =
+        message;
+
+    toast.appendChild(text);
+
+
+    if (actionLabel && action) {
+
+        const button =
+            document.createElement("button");
+
+        button.type =
+            "button";
+
+        button.textContent =
+            actionLabel;
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                hideToast();
+
+                action();
+
+            }
+        );
+
+        toast.appendChild(button);
+
+    }
+
+
+    toast.classList.add(
+        "is-visible"
+    );
+
+
+    clearTimeout(toastTimer);
+
+    toastTimer =
+        setTimeout(
+            hideToast,
+            3500
+        );
+
+}
+
+
+function hideToast() {
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+
+    if (toast) {
+
+        toast.classList.remove(
+            "is-visible"
+        );
+
+    }
+
+}
+
+
+/* Escape closes the drawer (the dialog
+   handles Escape itself), and closing the
+   dialog any way clears the pending order. */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Escape"
+            &&
+            document.body.classList.contains("cart-open")
+        ) {
+
+            closeCart();
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        const dialog =
+            document.getElementById(
+                "checkoutDialog"
+            );
+
+
+        if (dialog) {
+
+            dialog.addEventListener(
+                "close",
+                () => {
+
+                    pendingCheckout =
+                        null;
+
+                }
+            );
+
+        }
+
+    }
+);
 
 
 /* =========================================

@@ -10,7 +10,12 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>SoleStream | Shoe Store</title>
+    <meta
+        name="theme-color"
+        content="#1B1916"
+    >
+
+    <title>SoleStream | Shop</title>
 
     <link
         rel="stylesheet"
@@ -20,28 +25,24 @@
 </head>
 
 
-<body>
+<body class="shop-page">
 
 
     <!-- NAVBAR -->
 
-    <nav class="navbar">
+    <header class="navbar">
 
-        <div class="logo">
+        <a
+            class="logo"
+            href="shoes.html"
+        >
 
-            SoleStream 👟
+            Sole<span>Stream</span>
 
-        </div>
+        </a>
 
 
-        <div class="nav-links">
-
-            <a href="index.html">
-
-                Change User
-
-            </a>
-
+        <nav class="nav-links">
 
             <a href="shoes.html">
 
@@ -50,45 +51,73 @@
             </a>
 
 
-            <button
-                class="cart-nav-button"
-                onclick="scrollToCart()"
+            <a
+                class="nav-secondary"
+                href="index.html"
             >
 
-                🛒 View Cart
-                (
-                <span id="cartCount">
-                    0
+                Switch shopper
+
+            </a>
+
+
+            <button
+                type="button"
+                class="cart-nav-button"
+                onclick="openCart()"
+                aria-label="Open cart"
+            >
+
+                <svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="M6 7h12l-1.2 11.1a2 2 0 0 1-2 1.9H9.2a2 2 0 0 1-2-1.9L6 7Z" />
+                    <path d="M9 7a3 3 0 0 1 6 0" />
+                </svg>
+
+                <span class="cart-nav-label">
+
+                    Cart
+
                 </span>
-                )
+
+                <span
+                    id="cartCount"
+                    class="cart-badge"
+                >0</span>
 
             </button>
 
-        </div>
+        </nav>
 
-    </nav>
+    </header>
 
 
     <!-- WELCOME -->
 
     <section class="shop-header">
 
+        <p class="eyebrow">
+
+            Hi,
+            <span id="welcomeName">Shopper</span>
+
+        </p>
+
+
         <h1>
 
-            Welcome,
-
-            <span id="welcomeName">
-
-                Shopper
-
-            </span>
-
-            !
+            The everyday rotation
 
         </h1>
 
 
-        <p id="userDetails">
+        <p
+            id="userDetails"
+            class="shopper-details"
+        >
 
             Explore shoes and find your perfect pair.
 
@@ -99,126 +128,150 @@
 
     <!-- FILTERS -->
 
-    <section class="filters-section">
-
-        <h2>
-            Find Your Shoes
-        </h2>
-
+    <section
+        class="filters-section"
+        aria-label="Filter shoes"
+    >
 
         <div class="filters">
 
 
             <!-- BRAND -->
 
-            <select id="brandFilter">
+            <label class="filter-pill">
 
-                <option value="all">
-                    All Brands
-                </option>
+                <span class="filter-label">Brand</span>
 
-                <option value="Nike">
-                    Nike
-                </option>
+                <select id="brandFilter">
 
-                <option value="Adidas">
-                    Adidas
-                </option>
+                    <option value="all">
+                        All
+                    </option>
 
-                <option value="Puma">
-                    Puma
-                </option>
+                    <option value="Nike">
+                        Nike
+                    </option>
 
-                <option value="New Balance">
-                    New Balance
-                </option>
+                    <option value="Adidas">
+                        Adidas
+                    </option>
 
-            </select>
+                    <option value="Puma">
+                        Puma
+                    </option>
+
+                    <option value="New Balance">
+                        New Balance
+                    </option>
+
+                </select>
+
+            </label>
 
 
             <!-- CATEGORY -->
 
-            <select id="categoryFilter">
+            <label class="filter-pill">
 
-                <option value="all">
-                    All Categories
-                </option>
+                <span class="filter-label">Category</span>
 
-                <option value="Running">
-                    Running
-                </option>
+                <select id="categoryFilter">
 
-                <option value="Casual">
-                    Casual
-                </option>
+                    <option value="all">
+                        All
+                    </option>
 
-                <option value="Basketball">
-                    Basketball
-                </option>
+                    <option value="Running">
+                        Running
+                    </option>
 
-                <option value="Training">
-                    Training
-                </option>
+                    <option value="Casual">
+                        Casual
+                    </option>
 
-            </select>
+                    <option value="Basketball">
+                        Basketball
+                    </option>
+
+                    <option value="Training">
+                        Training
+                    </option>
+
+                </select>
+
+            </label>
 
 
             <!-- COLOUR -->
 
-            <select id="colourFilter">
+            <label class="filter-pill">
 
-                <option value="all">
-                    All Colours
-                </option>
+                <span class="filter-label">Colour</span>
 
-                <option value="Black">
-                    Black
-                </option>
+                <select id="colourFilter">
 
-                <option value="White">
-                    White
-                </option>
+                    <option value="all">
+                        All
+                    </option>
 
-                <option value="Red">
-                    Red
-                </option>
+                    <option value="Black">
+                        Black
+                    </option>
 
-                <option value="Blue">
-                    Blue
-                </option>
+                    <option value="White">
+                        White
+                    </option>
 
-            </select>
+                    <option value="Red">
+                        Red
+                    </option>
+
+                    <option value="Blue">
+                        Blue
+                    </option>
+
+                </select>
+
+            </label>
 
 
             <!-- PRICE -->
 
-            <select id="priceFilter">
+            <label class="filter-pill">
 
-                <option value="all">
-                    All Prices
-                </option>
+                <span class="filter-label">Price</span>
 
-                <option value="0-3000">
-                    Under ₹3000
-                </option>
+                <select id="priceFilter">
 
-                <option value="3000-6000">
-                    ₹3000 - ₹6000
-                </option>
+                    <option value="all">
+                        All
+                    </option>
 
-                <option value="6000+">
-                    Above ₹6000
-                </option>
+                    <option value="0-3000">
+                        Under ₹3,000
+                    </option>
 
-            </select>
+                    <option value="3000-6000">
+                        ₹3,000 – ₹6,000
+                    </option>
+
+                    <option value="6000+">
+                        Over ₹6,000
+                    </option>
+
+                </select>
+
+            </label>
 
 
             <button
+                type="button"
                 class="clear-filter"
                 onclick="clearFilters()"
+                disabled
             >
 
-                Clear Filters
+                Clear all
 
             </button>
 
@@ -228,36 +281,85 @@
         <p
             id="productCount"
             class="product-count"
-        ></p>
+            aria-live="polite"
+        >
+
+            Loading shoes…
+
+        </p>
 
     </section>
 
 
     <!-- PRODUCTS -->
+    <!-- The skeleton cards are the loading state; displayProducts() replaces them. -->
 
-    <section class="products-section">
+    <main class="products-section">
 
         <div
             id="productContainer"
             class="product-grid"
-        ></div>
+            aria-busy="true"
+        >
 
-    </section>
+            <div class="product-card skeleton" aria-hidden="true"></div>
+            <div class="product-card skeleton" aria-hidden="true"></div>
+            <div class="product-card skeleton" aria-hidden="true"></div>
+            <div class="product-card skeleton" aria-hidden="true"></div>
+
+        </div>
+
+    </main>
 
 
-    <!-- CART -->
+    <!-- CART DRAWER -->
 
-    <section
+    <div
+        class="drawer-scrim"
+        onclick="closeCart()"
+    ></div>
+
+
+    <aside
         id="cart"
-        class="cart-section"
+        class="cart-drawer"
+        aria-label="Your cart"
+        inert
     >
 
-        <h2>
-            🛒 Your Cart
-        </h2>
+        <div class="drawer-header">
+
+            <h2>
+
+                Your cart
+
+            </h2>
 
 
-        <div id="cartItems">
+            <button
+                type="button"
+                class="icon-button"
+                onclick="closeCart()"
+                aria-label="Close cart"
+            >
+
+                <svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="cartItems"
+            class="cart-items"
+        >
 
             Your cart is empty.
 
@@ -266,36 +368,59 @@
 
         <div class="cart-summary">
 
-            <h3>
+            <div class="summary-row">
 
-                Total:
+                <span>Subtotal</span>
 
-                ₹
-                <span id="cartTotal">
-                    0
-                </span>
+                <span id="cartTotal">₹0</span>
 
-            </h3>
+            </div>
+
+
+            <p class="summary-note">
+
+                Free delivery · 7-day returns
+
+            </p>
 
 
             <button
+                type="button"
+                id="checkoutButton"
                 class="buy-button"
-                onclick="buyCart()"
+                onclick="openCheckout('cart')"
             >
 
-                Buy Now
+                Checkout
 
             </button>
 
-
-            <div
-                id="orderMessage"
-                class="order-message"
-            ></div>
-
         </div>
 
-    </section>
+    </aside>
+
+
+    <!-- CHECKOUT (review, then confirm) -->
+
+    <dialog
+        id="checkoutDialog"
+        class="checkout-dialog"
+        aria-labelledby="checkoutTitle"
+    >
+
+        <div id="checkoutBody"></div>
+
+    </dialog>
+
+
+    <!-- TOAST -->
+
+    <div
+        id="toast"
+        class="toast"
+        role="status"
+        aria-live="polite"
+    ></div>
 
 
     <script src="script.js"></script>

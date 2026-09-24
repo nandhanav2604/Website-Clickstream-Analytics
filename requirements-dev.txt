@@ -1,0 +1,11 @@
+# Local tooling and test data generation (e.g. scripts/make_test_parquet.py).
+# NOT installed in the Docker images - those use requirements.txt only.
+#
+# Includes the production set, so one install covers everything run
+# on the host:
+#   .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+
+-r requirements.txt
+
+pandas
+pyarrow

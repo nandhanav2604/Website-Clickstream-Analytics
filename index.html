@@ -10,6 +10,11 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta
+        name="theme-color"
+        content="#1B1916"
+    >
+
     <title>SoleStream | Welcome</title>
 
     <link
@@ -20,179 +25,281 @@
 </head>
 
 
-<body>
+<body class="welcome-page">
 
 
     <!-- NAVBAR -->
 
-    <nav class="navbar">
+    <header class="navbar">
 
-        <div class="logo">
-            SoleStream 👟
-        </div>
+        <a
+            class="logo"
+            href="index.html"
+        >
+
+            Sole<span>Stream</span>
+
+        </a>
 
 
-        <div class="nav-links">
+        <nav class="nav-links">
 
             <a href="index.html">
+
                 Home
+
             </a>
+
 
             <a href="shoes.html">
-                Shop Shoes
+
+                Shop
+
             </a>
 
-        </div>
+        </nav>
 
-    </nav>
+    </header>
 
 
-    <!-- HERO -->
+    <main class="welcome">
 
-    <section class="hero">
 
-        <div class="hero-content">
+        <!-- HERO -->
+
+        <section class="hero">
+
+            <p class="eyebrow">
+
+                12 pairs · 4 brands · free delivery
+
+            </p>
+
 
             <h1>
-                Find Your Perfect Pair
+
+                Find your
+                <em>perfect pair.</em>
+
             </h1>
 
-            <p>
-                Discover shoes based on your style,
-                preferences and shopping choices.
+
+            <p class="hero-copy">
+
+                Running, court, training and everyday shoes from Nike,
+                Adidas, Puma and New Balance — from ₹2,800.
+
             </p>
 
 
-            <a href="#profile">
+            <ul class="hero-points">
 
-                <button>
-                    Get Started
+                <li>Free delivery on every order</li>
+
+                <li>7-day no-questions returns</li>
+
+                <li>Sizes 6 – 10</li>
+
+            </ul>
+
+
+            <div
+                class="hero-art"
+                aria-hidden="true"
+            >
+
+                <svg viewBox="0 0 240 140">
+                    <ellipse cx="124" cy="124" rx="100" ry="7" fill="rgba(27,25,22,0.12)" />
+                    <path d="M18 100 L230 100 C232 106 230 114 222 116 L30 116 C22 116 16 110 18 100 Z" fill="#F3EEE6" stroke="#C8431A" stroke-width="1.5" />
+                    <path d="M24 100 C22 86 26 74 38 70 L78 64 C92 62 100 52 110 42 L124 30 C130 25 138 26 142 32 L152 46 C160 58 176 66 196 72 L214 78 C224 82 228 90 226 100 Z" fill="#C8431A" />
+                    <path d="M62 92 C104 88 146 72 186 78" fill="none" stroke="#F3EEE6" stroke-width="6" stroke-linecap="round" />
+                    <path d="M118 44 L136 52 M126 37 L144 46 M134 31 L150 41" stroke="#F3EEE6" stroke-width="3" stroke-linecap="round" />
+                </svg>
+
+            </div>
+
+        </section>
+
+
+        <!-- PROFILE -->
+
+        <section
+            id="profile"
+            class="profile-page-section"
+        >
+
+            <form
+                class="profile-box"
+                onsubmit="event.preventDefault(); saveProfile();"
+                novalidate
+            >
+
+                <h2>
+
+                    Start shopping
+
+                </h2>
+
+
+                <p class="profile-intro">
+
+                    Your customer ID keeps your cart and likes separate from
+                    everyone else's on this device.
+
+                </p>
+
+
+                <!-- NAME -->
+
+                <label
+                    class="field-label"
+                    for="username"
+                >
+
+                    Name
+
+                </label>
+
+                <input
+                    type="text"
+                    id="username"
+                    placeholder="e.g. Josh"
+                    autocomplete="given-name"
+                >
+
+
+                <!-- UNIQUE CUSTOMER ID -->
+
+                <label
+                    class="field-label"
+                    for="customerId"
+                >
+
+                    Customer ID
+
+                </label>
+
+                <input
+                    type="text"
+                    id="customerId"
+                    placeholder="Mobile number or customer ID"
+                    autocomplete="off"
+                >
+
+
+                <div class="field-row">
+
+
+                    <!-- AGE GROUP -->
+
+                    <div class="field">
+
+                        <label
+                            class="field-label"
+                            for="ageGroup"
+                        >
+
+                            Age group
+
+                        </label>
+
+                        <select id="ageGroup">
+
+                            <option value="">
+                                Select
+                            </option>
+
+                            <option value="under_18">
+                                Under 18
+                            </option>
+
+                            <option value="18_25">
+                                18 – 25
+                            </option>
+
+                            <option value="26_40">
+                                26 – 40
+                            </option>
+
+                            <option value="41_60">
+                                41 – 60
+                            </option>
+
+                            <option value="60_plus">
+                                60+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- GENDER -->
+
+                    <div class="field">
+
+                        <label
+                            class="field-label"
+                            for="gender"
+                        >
+
+                            Gender
+
+                        </label>
+
+                        <select id="gender">
+
+                            <option value="">
+                                Select
+                            </option>
+
+                            <option value="male">
+                                Male
+                            </option>
+
+                            <option value="female">
+                                Female
+                            </option>
+
+                            <option value="other">
+                                Other
+                            </option>
+
+                            <option value="prefer_not_to_say">
+                                Prefer not to say
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- START SHOPPING -->
+
+                <button
+                    type="submit"
+                    class="primary-button"
+                >
+
+                    Start shopping →
+
                 </button>
 
-            </a>
 
-        </div>
+                <p
+                    id="profileMessage"
+                    class="profile-message"
+                    role="status"
+                    aria-live="polite"
+                ></p>
 
-    </section>
+            </form>
 
+        </section>
 
-    <!-- PROFILE -->
-
-    <section
-        id="profile"
-        class="profile-page-section"
-    >
-
-        <div class="profile-box">
-
-            <h2>
-                Tell Us About Yourself
-            </h2>
-
-
-            <p>
-                Your unique Customer ID helps us
-                identify your shopping session and
-                preferences.
-            </p>
-
-
-            <!-- NAME -->
-
-            <input
-                type="text"
-                id="username"
-                placeholder="Enter your name"
-            >
-
-
-            <!-- UNIQUE CUSTOMER ID -->
-
-            <input
-                type="text"
-                id="customerId"
-                placeholder="Enter Mobile Number or Customer ID"
-            >
-
-
-            <!-- AGE GROUP -->
-
-            <select id="ageGroup">
-
-                <option value="">
-                    Select Age Group
-                </option>
-
-                <option value="under_18">
-                    Under 18
-                </option>
-
-                <option value="18_25">
-                    18 - 25
-                </option>
-
-                <option value="26_40">
-                    26 - 40
-                </option>
-
-                <option value="41_60">
-                    41 - 60
-                </option>
-
-                <option value="60_plus">
-                    60+
-                </option>
-
-            </select>
-
-
-            <!-- GENDER -->
-
-            <select id="gender">
-
-                <option value="">
-                    Select Gender
-                </option>
-
-                <option value="male">
-                    Male
-                </option>
-
-                <option value="female">
-                    Female
-                </option>
-
-                <option value="other">
-                    Other
-                </option>
-
-                <option value="prefer_not_to_say">
-                    Prefer not to say
-                </option>
-
-            </select>
-
-
-            <!-- START SHOPPING -->
-
-            <button
-                class="primary-button"
-                onclick="saveProfile()"
-            >
-
-                Start Shopping →
-
-            </button>
-
-
-            <p
-                id="profileMessage"
-                class="profile-message"
-            ></p>
-
-        </div>
-
-    </section>
+    </main>
 
 
     <script src="script.js"></script>
