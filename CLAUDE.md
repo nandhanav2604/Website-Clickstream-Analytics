@@ -26,6 +26,12 @@ requirements.txt   Production deps, installed into the Docker images.
 requirements-dev.txt    Local tooling + test data (pandas, pyarrow); host only.
 requirements-sink.txt   Production set + pyarrow; the sink image only.
 scripts/make_test_parquet.py   Seeded fake events -> data/test_events.parquet.
+jobs/              Spark 3.5 + Delta: bronze.py -> silver.py -> gold.py (common.py
+                   shared). `make pipeline`; spark service is profile "jobs".
+Dockerfile.spark   apache/spark 3.5 + Delta jars baked in; runs as uid 1000.
+Makefile           pipeline | bronze | silver | gold | spark-image.
+data/lake/         Delta: bronze, silver_events, silver_sessions, silver_rejects.
+data/gold/         Plain Parquet for Power BI, one file per table.
 deploy/            EC2 only: docker-compose.prod.yml + Dockerfile.collector
                    (app.py under gunicorn, port 80). Local work never uses it.
 ```
@@ -66,6 +72,13 @@ deploy/            EC2 only: docker-compose.prod.yml + Dockerfile.collector
 - **Kafka state lives in the `kafka-data` volume** (topics + committed offsets)
   and survives `down`. `docker compose down -v` is the deliberate wipe.
 - `FLASK_DEBUG` (default off) is the only way to enable Flask debug.
+- **Spark jobs.** silver reads required fields from the tracking plan's
+  `## Required` table at runtime — keep that table's format. Dedupe is an
+  insert-only Delta MERGE on `event_id`, incremental by `bronze_ingest_time`, so
+  existing silver rows are never rewritten: after changing silver's cleaning
+  logic, rebuild (delete `data/lake/silver_*`, rerun). `USER_ID_SALT` in
+  `jobs/common.py` must match `script.js`; silver hashes legacy raw-number
+  user_ids with it, so no raw number reaches silver/gold (bronze keeps raw).
 
 ## Event schema
 

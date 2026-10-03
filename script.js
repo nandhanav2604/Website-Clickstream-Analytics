@@ -469,10 +469,359 @@ async function trackEvent(
 
 
 /* =========================================
+   USER ID (DERIVED FROM MOBILE NUMBER)
+
+   The mobile number is the login, but it
+   never leaves the browser and is never
+   stored: it is normalised, salted and
+   SHA-256 hashed here, and only the first
+   12 hex chars are kept. That value is stored as
+   user.customerId, which trackEvent()
+   already sends as user_id - so the payload
+   field and trackEvent itself are unchanged.
+
+   Same number -> same id, on any device, so
+   a returning shopper gets their cart back.
+
+   This is pseudonymisation, NOT anonymity:
+   the salt ships in this file and there are
+   only ~10^10 phone numbers, so anyone with
+   the code can brute-force an id back to its
+   number. It keeps raw numbers out of Kafka,
+   Parquet and logs; it is not a secret.
+========================================= */
+
+const USER_ID_SALT =
+    "solestream-user-id-v1:";
+
+const USER_ID_LENGTH =
+    12;
+
+/* Stored on the profile so pre-hashing
+   profiles (raw number as id) can be told
+   apart and retired - see below. */
+
+const USER_ID_VERSION =
+    1;
+
+
+/* "+91 98765 43210", "098765-43210" and
+   "9876543210" are one person: keep the
+   digits, drop a 91 / 0 prefix, and require
+   exactly 10 left. Returns null otherwise. */
+
+function normalisePhone(raw) {
+
+    let digits =
+        raw.replace(/\D/g, "");
+
+
+    if (
+        digits.length === 12
+        &&
+        digits.startsWith("91")
+    ) {
+
+        digits =
+            digits.slice(2);
+
+    }
+
+    else if (
+        digits.length === 11
+        &&
+        digits.startsWith("0")
+    ) {
+
+        digits =
+            digits.slice(1);
+
+    }
+
+
+    return digits.length === 10
+        ? digits
+        : null;
+
+}
+
+
+async function deriveUserId(phone) {
+
+    const input =
+        USER_ID_SALT + phone;
+
+
+    /* crypto.subtle exists only in secure
+       contexts (https, localhost). The EC2
+       demo is plain http, so fall back to
+       the JS implementation below - same
+       algorithm, same output. */
+
+    let hex;
+
+    if (window.crypto && crypto.subtle) {
+
+        const digest =
+            await crypto.subtle.digest(
+                "SHA-256",
+                new TextEncoder().encode(input)
+            );
+
+        hex =
+            Array.from(
+                new Uint8Array(digest),
+                byte => byte.toString(16).padStart(2, "0")
+            ).join("");
+
+    }
+
+    else {
+
+        hex =
+            sha256Hex(input);
+
+    }
+
+
+    return hex.slice(
+        0,
+        USER_ID_LENGTH
+    );
+
+}
+
+
+/* Plain SHA-256 (FIPS 180-4) over the
+   UTF-8 bytes of `text`, for insecure
+   contexts where crypto.subtle is absent.
+   Checked against crypto.subtle and
+   Python's hashlib. */
+
+const SHA256_K = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+];
+
+
+function sha256Hex(text) {
+
+    const rotr = (x, n) =>
+        (x >>> n) | (x << (32 - n));
+
+
+    const bytes =
+        new TextEncoder().encode(text);
+
+
+    // Pad: 0x80, zeros, then the 64-bit
+    // big-endian bit length
+
+    const paddedLength =
+        Math.ceil((bytes.length + 9) / 64) * 64;
+
+    const padded =
+        new Uint8Array(paddedLength);
+
+    padded.set(bytes);
+
+    padded[bytes.length] =
+        0x80;
+
+    const view =
+        new DataView(padded.buffer);
+
+    const bitLength =
+        bytes.length * 8;
+
+    view.setUint32(
+        paddedLength - 8,
+        Math.floor(bitLength / 0x100000000)
+    );
+
+    view.setUint32(
+        paddedLength - 4,
+        bitLength >>> 0
+    );
+
+
+    let hash = [
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+    ];
+
+    const w =
+        new Uint32Array(64);
+
+
+    for (let offset = 0; offset < paddedLength; offset += 64) {
+
+        for (let i = 0; i < 16; i++) {
+
+            w[i] =
+                view.getUint32(offset + i * 4);
+
+        }
+
+        for (let i = 16; i < 64; i++) {
+
+            const s0 =
+                rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+
+            const s1 =
+                rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+
+            w[i] =
+                (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+
+        }
+
+
+        let [a, b, c, d, e, f, g, h] = hash;
+
+        for (let i = 0; i < 64; i++) {
+
+            const t1 =
+                (h
+                + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25))
+                + ((e & f) ^ (~e & g))
+                + SHA256_K[i]
+                + w[i]) >>> 0;
+
+            const t2 =
+                ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22))
+                + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+
+            h = g;
+            g = f;
+            f = e;
+            e = (d + t1) >>> 0;
+            d = c;
+            c = b;
+            b = a;
+            a = (t1 + t2) >>> 0;
+
+        }
+
+
+        hash = [a, b, c, d, e, f, g, h].map(
+            (value, i) => (hash[i] + value) >>> 0
+        );
+
+    }
+
+
+    return hash
+        .map(value => value.toString(16).padStart(8, "0"))
+        .join("");
+
+}
+
+
+/* Profiles saved before ids were hashed
+   hold the raw number as customerId, and
+   trackEvent() would keep sending it. Drop
+   them at load so that shopper logs in
+   again and gets a hashed id; their cart
+   carries over (see carryOverLegacyKeys). */
+
+function retireUnhashedProfile() {
+
+    const user =
+        getCurrentUser();
+
+
+    if (
+        user
+        &&
+        user.idVersion !== USER_ID_VERSION
+    ) {
+
+        localStorage.removeItem(
+            "currentUser"
+        );
+
+    }
+
+}
+
+retireUnhashedProfile();
+
+
+/* A cart or likes stored under the old raw
+   key (the number as typed, or normalised)
+   moves to the hashed key, unless that
+   already exists. Either way the raw-keyed
+   copy is deleted. */
+
+function carryOverLegacyKeys(
+    rawCandidates,
+    customerId
+) {
+
+    ["cart", "reactions"].forEach(prefix => {
+
+        rawCandidates.forEach(raw => {
+
+            const legacyKey =
+                `${prefix}_${raw}`;
+
+            const legacyValue =
+                localStorage.getItem(legacyKey);
+
+
+            if (legacyValue === null) {
+
+                return;
+
+            }
+
+
+            if (
+                localStorage.getItem(`${prefix}_${customerId}`) === null
+            ) {
+
+                localStorage.setItem(
+                    `${prefix}_${customerId}`,
+                    legacyValue
+                );
+
+            }
+
+
+            localStorage.removeItem(
+                legacyKey
+            );
+
+        });
+
+    });
+
+}
+
+
+/* =========================================
    SAVE PROFILE / LOGIN
 ========================================= */
 
-function saveProfile() {
+let savingProfile =
+    false;
+
+
+async function saveProfile() {
+
+    if (savingProfile) {
+
+        return;
+
+    }
+
 
     const username =
         document
@@ -481,9 +830,9 @@ function saveProfile() {
             .trim();
 
 
-    const customerId =
+    const mobileNumber =
         document
-            .getElementById("customerId")
+            .getElementById("mobileNumber")
             .value
             .trim();
 
@@ -508,7 +857,7 @@ function saveProfile() {
 
     if (
         username === "" ||
-        customerId === "" ||
+        mobileNumber === "" ||
         ageGroup === "" ||
         gender === ""
     ) {
@@ -519,6 +868,60 @@ function saveProfile() {
         return;
 
     }
+
+
+    const phone =
+        normalisePhone(mobileNumber);
+
+
+    if (!phone) {
+
+        message.textContent =
+            "Please enter a 10-digit mobile number.";
+
+        return;
+
+    }
+
+
+    savingProfile =
+        true;
+
+
+    /* The raw number stops here: only the
+       derived id is stored or sent. */
+
+    let customerId;
+
+    try {
+
+        customerId =
+            await deriveUserId(phone);
+
+    }
+
+    catch (error) {
+
+        savingProfile =
+            false;
+
+        message.textContent =
+            "Something went wrong. Please try again.";
+
+        console.error(
+            "Could not derive user id:",
+            error
+        );
+
+        return;
+
+    }
+
+
+    carryOverLegacyKeys(
+        [mobileNumber, phone],
+        customerId
+    );
 
 
     const user = {
@@ -533,7 +936,10 @@ function saveProfile() {
             ageGroup,
 
         gender:
-            gender
+            gender,
+
+        idVersion:
+            USER_ID_VERSION
 
     };
 
@@ -545,13 +951,10 @@ function saveProfile() {
 
 
     /*
-    Each customer gets their own cart.
+    Each customer gets their own cart, keyed
+    by the derived id:
 
-    Example:
-
-    cart_9876543210
-
-    cart_CUST001
+    cart_3f9a0c1d22be
     */
 
 
@@ -572,6 +975,13 @@ function saveProfile() {
     trackEvent(
         "user_login"
     );
+
+
+    /* Saved: let the form work again (e.g.
+       when Back restores this page). */
+
+    savingProfile =
+        false;
 
 
     message.textContent =
@@ -741,7 +1151,7 @@ function initializeShop() {
     document.getElementById(
         "userDetails"
     ).textContent =
-        `Customer ID: ${user.customerId}
+        `Shopper ID: ${user.customerId}
          | Age Group: ${user.ageGroup}`;
 
 

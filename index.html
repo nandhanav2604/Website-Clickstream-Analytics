@@ -143,8 +143,9 @@
 
                 <p class="profile-intro">
 
-                    Your customer ID keeps your cart and likes separate from
-                    everyone else's on this device.
+                    Your mobile number signs you in and brings your cart back
+                    next time. It stays on this device — only a scrambled
+                    shopper ID made from it is recorded.
 
                 </p>
 
@@ -168,22 +169,26 @@
                 >
 
 
-                <!-- UNIQUE CUSTOMER ID -->
+                <!-- MOBILE NUMBER
+                     The login. saveProfile() hashes it in the browser; only
+                     the derived 12-char id is stored or sent (as user_id). -->
 
                 <label
                     class="field-label"
-                    for="customerId"
+                    for="mobileNumber"
                 >
 
-                    Customer ID
+                    Mobile number
 
                 </label>
 
                 <input
-                    type="text"
-                    id="customerId"
-                    placeholder="Mobile number or customer ID"
-                    autocomplete="off"
+                    type="tel"
+                    id="mobileNumber"
+                    placeholder="10-digit mobile number"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    maxlength="16"
                 >
 
 

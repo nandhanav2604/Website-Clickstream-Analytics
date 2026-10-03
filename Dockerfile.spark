@@ -1,0 +1,46 @@
+FROM apache/spark:3.5.6-python3
+
+# Delta Lake 3.3.x is built for Spark 3.5. The two jars go straight into
+# Spark's classpath at build time, so jobs never download anything at
+# runtime (no Ivy, no network). The Python package is installed with
+# --no-deps: pip would otherwise pull a second, 300 MB copy of pyspark.
+ARG DELTA_VERSION=3.3.2
+
+# Spark logs at INFO by default (dozens of startup lines per job); the
+# image ships no conf/ or template, so a minimal WARN-level config is
+# written below.
+#
+# Run as the host user that owns ./data (1000 = ec2-user on Amazon
+# Linux), so lake/gold files are not root- or 185-owned on the host.
+# Hadoop needs the uid to have a passwd entry, hence a real user.
+ARG APP_UID=1000
+ARG APP_GID=1000
+
+USER root
+
+RUN pip install --no-cache-dir --no-deps delta-spark==${DELTA_VERSION} \
+ && python3 -c "import urllib.request as u; \
+base = 'https://repo1.maven.org/maven2/io/delta'; \
+v = '${DELTA_VERSION}'; \
+[u.urlretrieve(f'{base}/{a}/{v}/{a}-{v}.jar', f'/opt/spark/jars/{a}-{v}.jar') \
+ for a in ('delta-spark_2.12', 'delta-storage')]" \
+ && mkdir -p /opt/spark/conf \
+ && printf '%s\n' \
+      'rootLogger.level = warn' \
+      'rootLogger.appenderRef.stdout.ref = console' \
+      'appender.console.type = Console' \
+      'appender.console.name = console' \
+      'appender.console.target = SYSTEM_ERR' \
+      'appender.console.layout.type = PatternLayout' \
+      'appender.console.layout.pattern = %d{HH:mm:ss} %p %c{1}: %m%n' \
+      > /opt/spark/conf/log4j2.properties \
+ && groupadd --gid ${APP_GID} app \
+ && useradd --uid ${APP_UID} --gid ${APP_GID} --create-home app
+
+USER app
+
+WORKDIR /opt/app
+
+ENV TZ=UTC
+
+ENTRYPOINT ["/opt/spark/bin/spark-submit", "--master", "local[*]", "--driver-memory", "1g"]

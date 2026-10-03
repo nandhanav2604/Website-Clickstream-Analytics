@@ -181,6 +181,30 @@ services:
       - ./data/bronze:/app/data/bronze
 
 
+  # Batch jobs (bronze -> silver -> gold), not a long-running service.
+  # The "jobs" profile keeps it out of a plain "docker compose up"; run it
+  # with "make pipeline" or "docker compose run --rm spark jobs/<job>.py".
+  spark:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+      args:
+        APP_UID: ${SINK_UID:-1000}
+        APP_GID: ${SINK_GID:-1000}
+
+    image: clickstream-spark:latest
+
+    profiles: ["jobs"]
+
+    # Reads data/bronze, writes data/lake (Delta) and data/gold (Parquet).
+    # jobs/ and docs/ are read-only: silver reads the Required table from
+    # docs/tracking-plan.md, the authority for required fields.
+    volumes:
+      - ./data:/opt/app/data
+      - ./jobs:/opt/app/jobs:ro
+      - ./docs:/opt/app/docs:ro
+
+
 # Named volume for the broker's data: survives "docker compose down".
 # Only "docker compose down -v" (or "docker volume rm") deletes it.
 
