@@ -13,16 +13,18 @@ Vanilla HTML/CSS/JS (no framework, no build) · Flask + flask-cors + `kafka-pyth
 ## Layout
 
 ```
-index.html / shoes.html / style.css  Storefront; open directly, no build
+index.html / shoes.html / style.css  Storefront; no build, served by app.py
 script.js          Product data, cart/profile, trackEvent() -> POST /api/events
-app.py             Flask ingestion API -> Kafka. Runs ON THE HOST.
-producer.py / consumer.py   SYNTHETIC generator / topic printer. Containerised.
+app.py             Flask: serves the storefront + ingestion API -> Kafka. HOST.
+consumer.py        Topic printer + contract check -> DLQ. Containerised.
+sink.py            Kafka -> Parquet, data/bronze/event_date=/hour=. Containerised.
 config.py          Single source of Kafka settings for every service.
-docker-compose.yml kafka + producer + consumer (app.py deliberately excluded)
+docker-compose.yml kafka (named volume) + consumer + sink (app.py deliberately excluded)
 .env.example       Template; copy to .env (gitignored)
 docs/tracking-plan.md   Event contract. Authority for required/optional fields.
 requirements.txt   Production deps, installed into the Docker images.
 requirements-dev.txt    Local tooling + test data (pandas, pyarrow); host only.
+requirements-sink.txt   Production set + pyarrow; the sink image only.
 scripts/make_test_parquet.py   Seeded fake events -> data/test_events.parquet.
 ```
 
@@ -44,7 +46,18 @@ scripts/make_test_parquet.py   Seeded fake events -> data/test_events.parquet.
   Dockerfiles install it, so every entry grows the images. Local tooling and
   test-data deps go in `requirements-dev.txt` (which `-r` includes the
   production set; install that one on the host).
-- Known gap: API base URL hardcoded as `http://localhost:5000` in `script.js`.
+- **Same-origin storefront.** `trackEvent()` posts to the relative
+  `/api/events`, so pages must be served by `app.py` (http://localhost:5000/),
+  never opened as `file://`. `app.py` serves a fixed whitelist of storefront
+  files — never the project directory, which holds `.env`.
+- **Sink commits after writing.** `sink.py` has auto-commit off and commits
+  offsets only after the Parquet file is renamed into place; it flushes on
+  SIGTERM. It does not DLQ — `consumer.py` owns the DLQ. It runs as
+  `SINK_UID:SINK_GID` (default 1000:1000 = ec2-user) so bronze files are not
+  root-owned; `data/bronze` must exist, owned by that user, before first `up`.
+- **Kafka state lives in the `kafka-data` volume** (topics + committed offsets)
+  and survives `down`. `docker compose down -v` is the deliberate wipe.
+- `FLASK_DEBUG` (default off) is the only way to enable Flask debug.
 
 ## Event schema
 
@@ -61,7 +74,8 @@ into a silent null that corrupts analytics instead of surfacing the producer:
 3. **Malformed bytes/JSON** — skip and log the offset; one bad message must never
    stop the stream.
 
-> **Phase 1 in place.** Both producers emit the required ids. `consumer.py` does
+> **Phase 1 in place.** The storefront (`script.js`), the only event producer,
+> emits the required ids. `consumer.py` does
 > all three: presence check on required fields -> DLQ (`KAFKA_DLQ_TOPIC` in
 > `config.py`), `.get()` defaults for optional fields, skip-and-log on bad bytes.
 > Not done yet: type/format validation, per-event properties, and the pre-cutover

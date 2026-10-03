@@ -22,7 +22,7 @@ load_dotenv()
 # Defaults
 #
 # These literals live here and nowhere else.
-# app.py, producer.py and consumer.py all
+# app.py, consumer.py and sink.py all
 # import from this module rather than
 # spelling out a broker address themselves.
 #

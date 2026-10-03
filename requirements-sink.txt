@@ -1,0 +1,6 @@
+# Parquet sink image only (Dockerfile.sink). Kept out of requirements.txt
+# so pyarrow does not grow the producer and consumer images.
+
+-r requirements.txt
+
+pyarrow

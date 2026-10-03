@@ -3,19 +3,20 @@
 The authority for the clickstream event contract. `CLAUDE.md` points here; the
 field list is not duplicated there.
 
-> **Status — Phase 1 in place.** `script.js` and `producer.py` both emit every
-> required field. `consumer.py` checks presence (absent, null or blank counts as
-> missing) and routes failures to `KAFKA_DLQ_TOPIC`. Types and formats are not
+> **Status — Phase 1 in place.** `script.js`, the storefront and the only event
+> producer, emits every required field. `consumer.py` checks presence (absent,
+> null or blank counts as missing) and routes failures to `KAFKA_DLQ_TOPIC`. Types and formats are not
 > validated yet, and per-event properties are still unspecified.
 
 ## Identifier semantics
 
-- `anonymous_id` — storefront: UUID created once per browser in `localStorage`,
-  kept across login/logout. Producer: one per simulated visitor.
-- `session_id` — storefront: rotates after 30 minutes with no tracked activity,
-  shared across tabs. Producer: rotates at random (10% per event).
+- `anonymous_id` — UUID created once per browser in `localStorage`, kept across
+  login/logout.
+- `session_id` — rotates after 30 minutes with no tracked activity, shared
+  across tabs.
 - `event_id` — a fresh UUID for every event.
-- `timestamp` — UTC with a `Z` suffix and millisecond precision from both sources.
+- `timestamp` — UTC with a `Z` suffix and millisecond precision
+  (`toISOString()`).
 
 ## Required
 

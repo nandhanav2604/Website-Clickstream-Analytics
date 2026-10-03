@@ -64,18 +64,33 @@ services:
       # One partition
       KAFKA_NUM_PARTITIONS: 1
 
+      # Data directory
+      #
+      # The image defaults to /tmp/kraft-combined-logs, inside the
+      # container, so "down" used to delete every topic and committed
+      # offset. /var/lib/kafka/data already exists in the image, owned
+      # by the non-root kafka user; a named volume mounted there copies
+      # that ownership, so the broker can write to it. It holds the KRaft
+      # metadata as well as the topic logs.
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
 
-  producer:
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+
+  # The storefront (via app.py on the host) is the only event producer.
+
+  consumer:
     # build: makes "docker compose build" (and "up --build") rebuild from
     # the code on disk; without it the container can silently run a stale
     # image. image: still names the result, so the tag stays consistent.
     build:
       context: .
-      dockerfile: Dockerfile.producer
+      dockerfile: Dockerfile.consumer
 
-    image: clickstream-producer:latest
+    image: clickstream-consumer:latest
 
-    container_name: clickstream-producer
+    container_name: clickstream-consumer
 
     depends_on:
       - kafka
@@ -92,23 +107,49 @@ services:
       # The topic name IS the same everywhere, so this one can come from
       # .env via compose's automatic variable substitution.
       KAFKA_TOPIC: ${KAFKA_TOPIC:-clickstream-json}
+      KAFKA_DLQ_TOPIC: ${KAFKA_DLQ_TOPIC:-clickstream-json-dlq}
 
 
-  consumer:
+  sink:
     build:
       context: .
-      dockerfile: Dockerfile.consumer
+      dockerfile: Dockerfile.sink
 
-    image: clickstream-consumer:latest
+    image: clickstream-sink:latest
 
-    container_name: clickstream-consumer
+    container_name: clickstream-sink
 
     depends_on:
       - kafka
 
     restart: on-failure
 
+    # "down" sends SIGTERM; sink.py flushes its buffer and commits
+    # before exiting. The default 10s is enough, this is headroom.
+    stop_grace_period: 30s
+
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: ${KAFKA_TOPIC:-clickstream-json}
-      KAFKA_DLQ_TOPIC: ${KAFKA_DLQ_TOPIC:-clickstream-json-dlq}
+
+    # Run as the host user that owns the project, not root, so Parquet
+    # files in the bind mount belong to that user and can be copied off
+    # without sudo. 1000:1000 is ec2-user on Amazon Linux (check with
+    # "id ec2-user"); override with SINK_UID / SINK_GID in .env.
+    #
+    # The host directory must exist and be owned by that user BEFORE the
+    # first "up" - if Docker has to create it, it creates it as root and
+    # the sink cannot write.
+    user: "${SINK_UID:-1000}:${SINK_GID:-1000}"
+
+    # Bind mount: Parquet files land in ./data/bronze on the host and
+    # survive the container. data/ is gitignored and dockerignored.
+    volumes:
+      - ./data/bronze:/app/data/bronze
+
+
+# Named volume for the broker's data: survives "docker compose down".
+# Only "docker compose down -v" (or "docker volume rm") deletes it.
+
+volumes:
+  kafka-data:

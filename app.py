@@ -1,4 +1,7 @@
-from flask import Flask, request, jsonify
+import os
+from pathlib import Path
+
+from flask import Flask, request, jsonify, send_from_directory, abort
 from flask_cors import CORS
 from kafka import KafkaProducer
 import json
@@ -56,6 +59,48 @@ def health():
         "status": "healthy",
         "service": "clickstream-ingestion-api"
     })
+
+
+# =========================================
+# Storefront
+#
+# script.js posts to the RELATIVE path
+# /api/events, so the pages must come from
+# this same origin. Only the named files are
+# served - never the whole directory, which
+# also holds .env and the Python sources.
+# =========================================
+
+STOREFRONT_DIR = Path(__file__).resolve().parent
+
+STOREFRONT_FILES = {
+    "index.html",
+    "shoes.html",
+    "style.css",
+    "script.js"
+}
+
+
+@app.route("/", methods=["GET"])
+def storefront_home():
+
+    return send_from_directory(
+        STOREFRONT_DIR,
+        "index.html"
+    )
+
+
+@app.route("/<filename>", methods=["GET"])
+def storefront_file(filename):
+
+    if filename not in STOREFRONT_FILES:
+
+        abort(404)
+
+    return send_from_directory(
+        STOREFRONT_DIR,
+        filename
+    )
 
 
 # =========================================
@@ -135,14 +180,30 @@ def receive_event():
 # Run Application
 # =========================================
 
+# Debug is OFF unless FLASK_DEBUG is set to
+# a true value. The server binds 0.0.0.0,
+# and the debug console runs arbitrary code
+# for anyone who can reach the port - so it
+# must be opted into, never defaulted.
+
+DEBUG = os.getenv(
+    "FLASK_DEBUG",
+    ""
+).strip().lower() in ("1", "true", "yes", "on")
+
+
 if __name__ == "__main__":
 
     print(
         "Starting SoleStream Clickstream API..."
     )
 
+    print(
+        f"Debug mode: {'ON (local use only)' if DEBUG else 'off'}"
+    )
+
     app.run(
         host="0.0.0.0",
         port=5000,
-        debug=True
+        debug=DEBUG
     )

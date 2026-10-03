@@ -122,7 +122,7 @@ PAGES = [
 # --------------------------------
 # Simulated Visitors
 #
-# Same model as producer.py: a stable
+# Same model as the storefront: a stable
 # anonymous_id per browser, a user_id
 # only for signed-in visitors (the
 # minority), and sessions that rotate.
