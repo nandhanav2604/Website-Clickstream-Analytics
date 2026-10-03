@@ -26,6 +26,8 @@ requirements.txt   Production deps, installed into the Docker images.
 requirements-dev.txt    Local tooling + test data (pandas, pyarrow); host only.
 requirements-sink.txt   Production set + pyarrow; the sink image only.
 scripts/make_test_parquet.py   Seeded fake events -> data/test_events.parquet.
+deploy/            EC2 only: docker-compose.prod.yml + Dockerfile.collector
+                   (app.py under gunicorn, port 80). Local work never uses it.
 ```
 
 ## Conventions
@@ -86,3 +88,42 @@ into a silent null that corrupts analytics instead of surfacing the producer:
 > `config.py`), `.get()` defaults for optional fields, skip-and-log on bad bytes.
 > Not done yet: type/format validation, per-event properties, and the pre-cutover
 > replay decision (see the tracking plan).
+
+## Deploy (single EC2 demo)
+
+c7i-flex.large · Amazon Linux 2023 · ap-south-1. Security group: inbound TCP 80
+from anywhere, TCP 22 from your IP only. Never open 9092.
+
+Fresh instance, as `ec2-user`. AL2023's docker RPM has no Compose plugin and an
+old Buildx (`compose build requires buildx 0.17 or later`), so install both:
+
+```bash
+sudo dnf install -y docker git
+sudo systemctl enable --now docker
+sudo usermod -aG docker ec2-user && exit          # log back in for the group
+
+mkdir -p ~/.docker/cli-plugins
+curl -fsSL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+  -o ~/.docker/cli-plugins/docker-compose
+BX=$(curl -fsSL https://api.github.com/repos/docker/buildx/releases/latest | grep -oP '"tag_name": "\K[^"]+')
+curl -fsSL "https://github.com/docker/buildx/releases/download/$BX/buildx-$BX.linux-amd64" \
+  -o ~/.docker/cli-plugins/docker-buildx
+chmod +x ~/.docker/cli-plugins/docker-*
+docker compose version && docker buildx version
+
+git clone https://github.com/DharneshE/WebStreamETDS.git && cd WebStreamETDS
+mkdir -p data/bronze          # as ec2-user, BEFORE up - else Docker makes it root-owned
+docker compose -f deploy/docker-compose.prod.yml up -d --build
+curl -s localhost/health      # then browse http://<public-dns>/
+```
+
+**Download the data BEFORE terminating — `data/bronze` and the Kafka volume
+live on the instance's disk and die with it.** Stop the sink first so it
+flushes its buffer (up to 49 events / 60s) to Parquet:
+
+```bash
+# on the instance
+docker compose -f deploy/docker-compose.prod.yml stop sink
+# on your machine
+scp -i <key>.pem -r ec2-user@<public-dns>:~/WebStreamETDS/data/bronze ./data/bronze-ec2
+```

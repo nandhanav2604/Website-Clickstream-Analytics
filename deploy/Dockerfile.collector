@@ -1,0 +1,30 @@
+FROM python:3.11-slim
+
+# Send print() straight to the container log instead of sitting in an
+# 8KB block buffer.
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
+
+# The ingestion API plus the storefront files app.py serves. Nothing
+# else: the build context is the repo root, and .dockerignore already
+# keeps .env out of it.
+COPY config.py app.py ./
+COPY index.html shoes.html style.css script.js ./
+
+# Unprivileged user; 8000 needs no root. Compose publishes it as port 80.
+# A home directory is required: gunicorn writes runtime state there.
+RUN useradd --uid 10001 --create-home collector
+USER collector
+
+EXPOSE 8000
+
+# 4 sync workers. No --preload: each worker imports app.py and creates
+# its own KafkaProducer (with connect_with_retry) after the fork - a
+# producer's background thread does not survive fork().
+# app.run() is never called, so Flask debug cannot be on.
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--access-logfile", "-", "app:app"]

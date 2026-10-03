@@ -1,0 +1,129 @@
+# =========================================
+# SoleStream - single EC2 instance demo
+#
+# Run from the repo root:
+#   docker compose -f deploy/docker-compose.prod.yml up -d --build
+#
+# Relative paths below resolve from THIS
+# directory (deploy/), hence the "..".
+# The local docker-compose.yml is separate
+# and unchanged.
+# =========================================
+
+name: solestream
+
+services:
+
+  kafka:
+    image: apache/kafka:latest
+
+    restart: unless-stopped
+
+    # No ports published: only containers on this network talk to the
+    # broker. The local file's PLAINTEXT_HOST listener is dropped, so
+    # LISTENERS, ADVERTISED_LISTENERS and the protocol map change together.
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 30s
+
+
+  # app.py under gunicorn: serves the storefront and /api/events.
+  collector:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.collector
+
+    image: solestream-collector:latest
+
+    restart: unless-stopped
+
+    init: true
+
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+    ports:
+      - "80:8000"
+
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC: clickstream-json
+      FLASK_DEBUG: "0"
+
+
+  consumer:
+    build:
+      context: ..
+      dockerfile: Dockerfile.consumer
+
+    image: solestream-consumer:latest
+
+    restart: unless-stopped
+
+    init: true
+
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC: clickstream-json
+      KAFKA_DLQ_TOPIC: clickstream-json-dlq
+
+
+  sink:
+    build:
+      context: ..
+      dockerfile: Dockerfile.sink
+
+    image: solestream-sink:latest
+
+    restart: unless-stopped
+
+    init: true
+
+    stop_grace_period: 30s
+
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+    # 1000:1000 is ec2-user on Amazon Linux 2023, so the Parquet files
+    # can be scp'd without sudo. ../data/bronze must exist, owned by
+    # ec2-user, before the first "up".
+    user: "1000:1000"
+
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC: clickstream-json
+
+    volumes:
+      - ../data/bronze:/app/data/bronze
+
+
+volumes:
+  kafka-data:
