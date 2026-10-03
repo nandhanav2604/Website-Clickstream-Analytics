@@ -55,6 +55,12 @@ scripts/make_test_parquet.py   Seeded fake events -> data/test_events.parquet.
   SIGTERM. It does not DLQ — `consumer.py` owns the DLQ. It runs as
   `SINK_UID:SINK_GID` (default 1000:1000 = ec2-user) so bronze files are not
   root-owned; `data/bronze` must exist, owned by that user, before first `up`.
+- **Create Kafka clients via `config.connect_with_retry()`** (backoff, gives up
+  after 120s) — app.py, consumer.py and sink.py all do. Compose also gates
+  consumer/sink on kafka's healthcheck, runs them with `init: true` (prompt
+  SIGTERM), and restarts kafka `unless-stopped`. Catch
+  broker-down errors via `config.BROKER_UNAVAILABLE` — kafka-python 3.x removed
+  `NoBrokersAvailable`, so importing it directly breaks every service.
 - **Kafka state lives in the `kafka-data` volume** (topics + committed offsets)
   and survives `down`. `docker compose down -v` is the deliberate wipe.
 - `FLASK_DEBUG` (default off) is the only way to enable Flask debug.

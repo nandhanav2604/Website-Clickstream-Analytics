@@ -13,6 +13,7 @@ from kafka import KafkaConsumer
 from config import (
     KAFKA_BOOTSTRAP_SERVERS,
     KAFKA_TOPIC,
+    connect_with_retry,
     print_config
 )
 
@@ -314,17 +315,24 @@ def write_batch(buffer):
 # re-reads the batch on restart
 # (at-least-once; duplicates are
 # removable later by event_id).
+#
+# Retried with backoff: at "up" this can
+# start before the broker accepts
+# connections.
 # --------------------------------
 
-consumer = KafkaConsumer(
-    KAFKA_TOPIC,
-    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+consumer = connect_with_retry(
+    lambda: KafkaConsumer(
+        KAFKA_TOPIC,
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
 
-    group_id="clickstream-sink",
+        group_id="clickstream-sink",
 
-    auto_offset_reset="earliest",
+        auto_offset_reset="earliest",
 
-    enable_auto_commit=False
+        enable_auto_commit=False
+    ),
+    "sink consumer"
 )
 
 

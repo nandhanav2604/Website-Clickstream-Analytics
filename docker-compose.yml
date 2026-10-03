@@ -5,6 +5,11 @@ services:
 
     container_name: clickstream-kafka
 
+    # Comes back after a Docker daemon restart or host reboot (consumer
+    # and sink already restart on failure; without this the broker stayed
+    # down and they retried forever). Only an explicit stop keeps it down.
+    restart: unless-stopped
+
     ports:
       # Only the host listener is published. Port 9092 is deliberately
       # NOT exposed: it advertises kafka:9092, a name the host cannot
@@ -77,6 +82,20 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
 
+    # Healthy = the broker answers an API-versions request on the
+    # in-network listener, i.e. clients can actually bootstrap. An open
+    # port alone is not enough: the JVM listens before the broker has
+    # registered with the KRaft controller.
+    #
+    # start_period covers JVM + KRaft startup; failures inside it do not
+    # count against retries.
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 30s
+
 
   # The storefront (via app.py on the host) is the only event producer.
 
@@ -92,8 +111,17 @@ services:
 
     container_name: clickstream-consumer
 
+    # A tiny init (tini) runs as PID 1 and forwards signals. Python as
+    # PID 1 ignores SIGTERM until a handler is installed, so a stop during
+    # the startup wait for kafka used to sit out the whole grace period.
+    init: true
+
+    # Start only once kafka's healthcheck passes. This orders "up"; the
+    # retry loop in config.connect_with_retry() covers everything else
+    # (a manual restart, kafka bouncing while this container lives).
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
 
     restart: on-failure
 
@@ -119,8 +147,13 @@ services:
 
     container_name: clickstream-sink
 
+    # See consumer. tini forwards SIGTERM to sink.py, whose handler still
+    # flushes and commits on "down".
+    init: true
+
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
 
     restart: on-failure
 

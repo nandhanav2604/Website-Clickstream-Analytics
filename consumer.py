@@ -5,6 +5,7 @@ from config import (
     KAFKA_BOOTSTRAP_SERVERS,
     KAFKA_TOPIC,
     KAFKA_DLQ_TOPIC,
+    connect_with_retry,
     print_config
 )
 
@@ -61,19 +62,26 @@ def missing_required(event):
 # Create Kafka Consumer
 # --------------------------------
 
-consumer = KafkaConsumer(
-    KAFKA_TOPIC,
-    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+# Retried with backoff: at "up" this can
+# start before the broker accepts
+# connections.
 
-    # Read from the beginning if this
-    # consumer group has no previous offset
-    auto_offset_reset="earliest",
+consumer = connect_with_retry(
+    lambda: KafkaConsumer(
+        KAFKA_TOPIC,
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
 
-    # Automatically commit offsets
-    enable_auto_commit=True,
+        # Read from the beginning if this
+        # consumer group has no previous offset
+        auto_offset_reset="earliest",
 
-    # Consumer group
-    group_id="clickstream-consumer-group"
+        # Automatically commit offsets
+        enable_auto_commit=True,
+
+        # Consumer group
+        group_id="clickstream-consumer-group"
+    ),
+    "consumer"
 )
 
 
@@ -81,15 +89,18 @@ consumer = KafkaConsumer(
 # Create DLQ Producer
 # --------------------------------
 
-dlq_producer = KafkaProducer(
-    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+dlq_producer = connect_with_retry(
+    lambda: KafkaProducer(
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
 
-    value_serializer=lambda value:
-        json.dumps(value).encode("utf-8"),
+        value_serializer=lambda value:
+            json.dumps(value).encode("utf-8"),
 
-    acks="all",
+        acks="all",
 
-    retries=5
+        retries=5
+    ),
+    "DLQ producer"
 )
 
 

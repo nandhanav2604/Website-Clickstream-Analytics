@@ -9,6 +9,7 @@ import json
 from config import (
     KAFKA_BOOTSTRAP_SERVERS,
     KAFKA_TOPIC,
+    connect_with_retry,
     print_config
 )
 
@@ -31,17 +32,25 @@ print_config("clickstream-ingestion-api")
 
 # =========================================
 # Kafka Producer
+#
+# Retried with backoff: app.py runs on the
+# host, outside compose, so the kafka
+# healthcheck cannot hold it back if it is
+# started before the broker is ready.
 # =========================================
 
-producer = KafkaProducer(
-    bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+producer = connect_with_retry(
+    lambda: KafkaProducer(
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
 
-    value_serializer=lambda value:
-        json.dumps(value).encode("utf-8"),
+        value_serializer=lambda value:
+            json.dumps(value).encode("utf-8"),
 
-    acks="all",
+        acks="all",
 
-    retries=5
+        retries=5
+    ),
+    "ingestion API producer"
 )
 
 

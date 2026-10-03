@@ -1,6 +1,8 @@
 import os
+import time
 
 from dotenv import load_dotenv
+from kafka import errors as kafka_errors
 
 
 # =========================================
@@ -101,3 +103,91 @@ def print_config(service_name):
         )
 
     print("=" * 52)
+
+
+# =========================================
+# Startup: Wait for the Broker
+#
+# Creating a Kafka client fails at once if
+# the broker is not accepting connections
+# yet (NoBrokersAvailable in kafka-python
+# 2.x, KafkaTimeoutError "Unable to
+# bootstrap" in 3.x, which removed
+# NoBrokersAvailable entirely - so look
+# both up instead of importing). Instead of
+# exiting and leaning on the container
+# restart policy, retry with exponential
+# backoff: 1s, 2s, 4s ... capped at 15s.
+#
+# In 3.x each attempt itself already waits
+# up to bootstrap_timeout_ms (30s) before
+# raising, so attempts are ~30s apart; in
+# 2.x they fail fast and the backoff does
+# the pacing.
+#
+# After STARTUP_TIMEOUT_SECONDS it gives up
+# and re-raises, so a genuinely wrong
+# broker address still fails loudly rather
+# than waiting forever.
+# =========================================
+
+STARTUP_TIMEOUT_SECONDS = 120
+
+STARTUP_MAX_BACKOFF_SECONDS = 15
+
+
+BROKER_UNAVAILABLE = tuple(
+    getattr(kafka_errors, name)
+    for name in ("NoBrokersAvailable", "KafkaTimeoutError")
+    if hasattr(kafka_errors, name)
+)
+
+
+def connect_with_retry(factory, description):
+
+    deadline = time.monotonic() + STARTUP_TIMEOUT_SECONDS
+
+    delay = 1
+
+    attempt = 1
+
+
+    while True:
+
+        try:
+
+            client = factory()
+
+            if attempt > 1:
+
+                print(f"Connected {description} on attempt {attempt}.")
+
+            return client
+
+
+        except BROKER_UNAVAILABLE as error:
+
+            if time.monotonic() + delay > deadline:
+
+                print(
+                    f"Giving up on {description} after "
+                    f"{STARTUP_TIMEOUT_SECONDS}s: {error}"
+                )
+
+                raise
+
+
+            print(
+                f"Kafka not ready for {description} "
+                f"(attempt {attempt}: {type(error).__name__}); "
+                f"retrying in {delay}s..."
+            )
+
+            time.sleep(delay)
+
+            delay = min(
+                delay * 2,
+                STARTUP_MAX_BACKOFF_SECONDS
+            )
+
+            attempt += 1
