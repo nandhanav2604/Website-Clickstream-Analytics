@@ -1,4 +1,4 @@
-# WebStreamETDS — Website Clickstream Analytics
+# Website Clickstream Analytics
 
 An end-to-end clickstream analytics pipeline built entirely from free and open-source
 components: a real storefront emits events, Kafka buffers them, Spark and Delta Lake
@@ -232,5 +232,5 @@ Two notes that matter when reading it:
 Python · Flask · Gunicorn · Apache Kafka (KRaft) · Apache Spark 3.5.6 · Delta Lake 3.3.2
 · Apache Parquet · Docker · Kubernetes · AWS EC2 · Power BI
 
-MSc Big Data Analytics — Lakshmi PS (252BDA08), Nandhana V (252BDA11),
-Dharnesh E (252BDA27)
+MSc Big Data Analytics — Lakshmi PS, Nandhana V,
+Dharnesh E
