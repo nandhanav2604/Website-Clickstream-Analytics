@@ -1,3 +1,5 @@
+Figures in this document describe the 3 October snapshot (317 events). The current dataset is 999 events across 55 sessions from 51 browsers, collected through the project presentation. Regenerate this file from the live tables with docker compose run --rm spark jobs/metadata.py after the next refresh.
+
 # Gold Tables — Schema Reference
 
 The four tables Power BI reads. Column names and types below were read from the
